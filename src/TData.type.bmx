@@ -6,13 +6,13 @@ Type TData
 	Field json_str$
 	Field json_view:TList'<TextWidget>
 
-	Field skin:TStarfarerSkin
-	Field json_str_skin$
-	Field json_view_skin:TList'<TextWidget>
-
 	Field variant:TStarfarerVariant
 	Field json_str_variant$
 	Field json_view_variant:TList'<TextWidget>
+
+	Field skin:TStarfarerSkin
+	Field json_str_skin$
+	Field json_view_skin:TList'<TextWidget>
 
 	Field csv_row:TMap'<String,String>  'column name --> value
 	Field csv_row_wing:TMap'<String,String>  'column name --> value
@@ -30,8 +30,8 @@ Type TData
 	Field snapshot_shouldhold% = False
 	Field snapshot_holdcurr% = False
 	Field snapshot_undoing% = False
-	Field snapshot_curr:Tsnapshot
-	Field snapshot_init:Tsnapshot
+	Field snapshot_curr:TSnapshot
+	Field snapshot_init:TSnapshot
 
 
 	Method New()
@@ -44,10 +44,16 @@ Type TData
 	Method Clear()
 		ship = New TStarfarerShip
 		variant = New TStarfarerVariant
+		skin = New TStarfarerSkin
 		csv_row = ship_data_csv_field_template.Copy()
 		csv_row_wing = wing_data_csv_field_template.Copy()
 		csv_row_weapon = weapon_data_csv_field_template.Copy()
 		weapon = New TStarfarerWeapon
+		update()
+		update_variant()
+		update_skin()
+		update_weapon()
+
 		changed = False
 		snapshots_undo:TList = CreateList()
 		snapshots_redo:TList = CreateList()
@@ -63,9 +69,9 @@ Type TData
 		json.formatted = True
 		'encode ship object as json data
 		json_str = json.stringify( ship, "stringify_ship" )
-		json_view = columnize_text( json_str )
+		json_view = columnize_text( json_str, APP.raw_json_view_max_column_width )
 		changed = True
-		take_snapshot(1)
+		take_snapshot(MENU_MODE_SHIP)
 	End Method
 
 	'requires subsequent call to update()
@@ -103,9 +109,9 @@ Type TData
 		json.formatted = True
 		'encode object as json data
 		json_str_variant = json.stringify( variant, "stringify_variant" )
-		json_view_variant = columnize_text( json_str_variant )
+		json_view_variant = columnize_text( json_str_variant, APP.raw_json_view_max_column_width )
 		changed = True
-		take_snapshot(2)
+		take_snapshot(MENU_MODE_VARIANT)
 	End Method
 
 	'requires subsequent call to update_skin()
@@ -118,9 +124,9 @@ Type TData
 		json.formatted = True
 		'encode object as json data
 		json_str_skin = json.stringify( skin, "stringify_skin" )
-		json_view_skin = columnize_text( json_str_skin )
+		json_view_skin = columnize_text( json_str_skin, APP.raw_json_view_max_column_width )
 		changed = True
-		take_snapshot(2)
+		take_snapshot(MENU_MODE_SKIN)
 	End Method
 
 	'requires subsequent call to update_variant()
@@ -185,9 +191,9 @@ Type TData
 	Method update_weapon()
 		json.formatted = True
 		json_str_weapon = json.stringify( weapon, "stringify_weapon" )
-		json_view_weapon = columnize_text( json_str_weapon )
+		json_view_weapon = columnize_text( json_str_weapon, APP.raw_json_view_max_column_width )
 		changed = True
-		take_snapshot(5)
+		take_snapshot(MENU_MODE_WEAPON)
 	EndMethod
 
 	Method set_hullId( old_hullId$, hullId$ )
@@ -878,6 +884,60 @@ Type TData
 
 	'////////////////
 
+	'requires subsequent call to update_skin()
+	Method toggle_skin_builtin_hullmod( hullmod_id$ )
+		If skin.builtInMods.length > 0
+			Local found% = False
+			For Local i% = 0 Until skin.builtInMods.length
+				If skin.builtInMods[i] = hullmod_id
+					'Found, Remove
+					found = True
+					For i = i Until skin.builtInMods.Length-1
+						skin.builtInMods[i] = skin.builtInMods[i+1]
+					Next
+					skin.builtInMods = skin.builtInMods[..skin.builtInMods.length-1]
+				EndIf
+			Next
+			If Not found
+				'Non-Empty but Not Found, Add
+				skin.builtInMods = skin.builtInMods[..skin.builtInMods.length+1]
+				skin.builtInMods[skin.builtInMods.length-1] = hullmod_id
+			EndIf
+		Else
+			'Empty, Add
+			skin.builtInMods = New String[1]
+			skin.builtInMods[0] = hullmod_id
+		EndIf
+	EndMethod
+
+	'requires subsequent call to update_skin()
+	Method toggle_skin_removeBuiltInMods_hullmod( hullmod_id$ )
+		If skin.removeBuiltInMods.length > 0
+			Local found% = False
+			For Local i% = 0 Until skin.removeBuiltInMods.length
+				If skin.removeBuiltInMods[i] = hullmod_id
+					'Found, Remove
+					found = True
+					For i = i Until skin.removeBuiltInMods.Length-1
+						skin.removeBuiltInMods[i] = skin.removeBuiltInMods[i+1]
+					Next
+					skin.removeBuiltInMods = skin.removeBuiltInMods[..skin.removeBuiltInMods.length-1]
+				EndIf
+			Next
+			If Not found
+				'Non-Empty but Not Found, Add
+				skin.removeBuiltInMods = skin.removeBuiltInMods[..skin.removeBuiltInMods.length+1]
+				skin.removeBuiltInMods[skin.removeBuiltInMods.length-1] = hullmod_id
+			EndIf
+		Else
+			'Empty, Add
+			skin.removeBuiltInMods = New String[1]
+			skin.removeBuiltInMods[0] = hullmod_id
+		EndIf
+	EndMethod
+
+	'////////////////
+
 	'requires subsequent call to update_weapon()
 	Method append_weapon_offset( x#, y#, mount_type$, reflect_over_y_axis% = False )
 		If Not weapon Then Return
@@ -1377,10 +1437,29 @@ Type TData
 		EndIf
 	EndMethod
 
-	Method columnize_text:TList( text$ )
+	Method skin_adds_hullmod%( hullmod_id$ )
+		For Local scan_hullmod_id$ = EachIn skin.builtInMods
+			If scan_hullmod_id = hullmod_id Then Return True
+		Next
+		Return False
+	EndMethod
+
+	Method skin_removes_hullmod%( hullmod_id$ )
+		For Local scan_hullmod_id$ = EachIn skin.removeBuiltInMods
+			If scan_hullmod_id = hullmod_id Then Return True
+		Next
+		Return False
+	EndMethod
+
+	'/////////////////////
+
+	Method columnize_text:TList( text$, wrap_width% = 60 )
 		'break the data into viewport-sized column-chunks for condensed
 		Local columns:TList = CreateList()
 		Local lines$[] = text.Split("~n")
+		For Local L% = 0 Until lines.length
+			lines[L] = lines[L][..wrap_width]+" " ' truncate characters after 50
+		Next
 		Local lines_per_col% = H_MAX / DATA_LINE_HEIGHT - 2 'factor in status bar height at bottom, bout 2 lines or so
 		Local cols% = Ceil( Float(lines.length) / Float(lines_per_col) )
 		SetImageFont( DATA_FONT ) 'TextWidget uses TextWidth() to determine size, which uses current TImageFont
@@ -1396,53 +1475,58 @@ Type TData
 		If snapshot_undoing Then Return
 		If Not snapshot_inited Then Return
 		If Not snapshot_curr
-			snapshot_curr = New Tsnapshot
+			snapshot_curr = New TSnapshot
 		Else If Not snapshot_holdcurr
 			snapshots_undo.AddFirst(snapshot_curr)
 			snapshots_redo.Clear()
-			snapshot_curr = New Tsnapshot
+			snapshot_curr = New TSnapshot
 		EndIf
 		If snapshot_shouldhold Then snapshot_holdcurr = True
 		snapshot_curr.program_mode = ed.program_mode
 		snapshot_curr.mode = ed.mode
 		snapshot_curr.last_mode = ed.last_mode
+		
 		Select input
-		Case 1
-			snapshot_curr.json_str = json_str
-		Case 2
-			snapshot_curr.json_str_variant = json_str_variant
-		Case 3
-			snapshot_curr.csv_row = CopyMap(csv_row)
-		Case 4
-			snapshot_curr.csv_row_wing = CopyMap( csv_row_wing )
-		Case 5
-			snapshot_curr.json_str_weapon = json_str_weapon
-
-		Case 6
-			snapshot_curr.csv_row_weapon = CopyMap( csv_row_weapon )
-
-		Default
-			Select snapshot_curr.program_mode
-			Case "ship"
+			
+			Case MENU_MODE_SHIP
 				snapshot_curr.json_str = json_str
-			Case "variant"
+			Case MENU_MODE_VARIANT
 				snapshot_curr.json_str_variant = json_str_variant
-			Case "csv"
+			Case MENU_MODE_SKIN
+				snapshot_curr.json_str_skin = json_str_skin
+			Case MENU_MODE_SHIPSTATS
 				snapshot_curr.csv_row = CopyMap(csv_row)
-			Case "csv_wing"
+			Case MENU_MODE_WING
 				snapshot_curr.csv_row_wing = CopyMap( csv_row_wing )
-			Case "weapon"
+			Case MENU_MODE_WEAPON
 				snapshot_curr.json_str_weapon = json_str_weapon
-
-			Case "csv_weapon"
+			Case MENU_MODE_WEAPONSTATS
 				snapshot_curr.csv_row_weapon = CopyMap( csv_row_weapon )
 
-			End Select
-		End Select	
+			Default
+				Select snapshot_curr.program_mode
+					
+					Case "ship"
+						snapshot_curr.json_str = json_str
+					Case "variant"
+						snapshot_curr.json_str_variant = json_str_variant
+					Case "skin"
+						snapshot_curr.json_str_skin = json_str_skin
+					Case "csv"
+						snapshot_curr.csv_row = CopyMap(csv_row)
+					Case "csv_wing"
+						snapshot_curr.csv_row_wing = CopyMap( csv_row_wing )
+					Case "weapon"
+						snapshot_curr.json_str_weapon = json_str_weapon
+					Case "csv_weapon"
+						snapshot_curr.csv_row_weapon = CopyMap( csv_row_weapon )
+
+				EndSelect
+		EndSelect	
 	End Method
 	
 	Method take_initshot()
-		snapshot_init = New Tsnapshot
+		snapshot_init = New TSnapshot
 		snapshot_init.program_mode = ed.program_mode
 		snapshot_init.mode = ed.mode
 		snapshot_init.last_mode = ed.last_mode
@@ -1471,19 +1555,21 @@ Type TData
 
 	
 End Type	
-Type Tsnapshot	
+
+
+Type TSnapshot	
+	'
 	Field program_mode$
 	Field mode$
 	Field last_mode$
+	'
 	Field json_str$
 	Field json_str_variant$
+	Field json_str_skin$
 	Field csv_row:TMap'<String,String>  'column name --> value
 	Field csv_row_wing:TMap'<String,String>  'column name --> value
-
 	Field csv_row_weapon:TMap'<String,String>  'column name --> value
-
 	Field json_str_weapon$
-	'for string editing mode.
 	'Field values:TextWidget
-	
+
 End Type
