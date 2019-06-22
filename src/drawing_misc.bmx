@@ -102,6 +102,8 @@ Function draw_crosshairs( x%, y%, r%, diagonal% = False )
 	SetLineWidth( lw )
 End Function
 
+Rem
+'hmm, OK, I should redo this part
 Function draw_arc( x%, y%, r%, a1#, a2#, c%, pie% = True )
 	c = Max(1, c)
 	Local segments#[] = New Float[2 * c]
@@ -109,9 +111,9 @@ Function draw_arc( x%, y%, r%, a1#, a2#, c%, pie% = True )
 	For Local i% = 0 Until 2*c Step 2
 		a = a1 + ( (i / 2) * (a2 - a1) ) / c
 		segments[i] = x + r * Cos(a)
-		segments[i+1] = y - r*Sin(a)
+		segments[i+1] = y - r * Sin(a)
 	Next
-	'draw bg
+'	'draw bg
 	SetColor( 0,0,0 )
 	SetLineWidth( 4 )
 	For Local i% = 0 Until 2 * c - 2 Step 2
@@ -121,6 +123,7 @@ Function draw_arc( x%, y%, r%, a1#, a2#, c%, pie% = True )
 		DrawLine( segments[0], segments[1], x, y )
 		DrawLine( segments[2*c-2], segments[2*c-1], x, y )
 	End If
+
 	'draw fg
 	SetColor( 255,255,255 )
 	SetLineWidth( 2 )
@@ -132,6 +135,59 @@ Function draw_arc( x%, y%, r%, a1#, a2#, c%, pie% = True )
 		DrawLine( segments[2*c-2], segments[2*c-1], x, y )
 	End If
 End Function
+end rem
+
+Function draw_arc( x%, y%, r%, a1#, a2#, c%, pie% = False )
+	c = Max(1, c)
+	Local segments#[] = New Float[2 * c]
+	Local a#
+	For Local i% = 0 Until 2*c Step 2
+		a = a1 + ( (i / 2) * (a2 - a1) ) / c
+		segments[i] = x + r * Cos(a)
+		segments[i+1] = y - r * Sin(a)
+	Next
+	For Local i% = 0 Until 2 * c - 2 Step 2
+		DrawLine( segments[i], segments[i+1], segments[i+2], segments[i+3] )
+	Next
+	If pie
+		DrawLine( segments[0], segments[1], x, y )
+		DrawLine( segments[2*c-2], segments[2*c-1], x, y )
+	End If
+End Function
+
+'opps, this one is really expensive in CPU time.
+'draw a circular centre at x,y, with diameter equal to d. the c is the...resolutionish thing?
+Function draw_circular( x%, y%, d%, c% )
+	c = Max(1 , c)
+	d:/2
+	Local segments#[] = New Float[2 * c]
+	Local a#
+	For Local i% = 0 Until 2 * c Step 2
+		a =  (i / 2) * 360 / c
+		segments[i] = x + d * Cos(a)
+		segments[i+1] = y - d * Sin(a)
+	Next
+	For Local i% = 0 Until 2 * c - 2 Step 2
+		DrawLine( segments[i], segments[i+1], segments[i+2], segments[i+3] )
+	Next
+	DrawLine (segments[0] , segments[1] , segments[2 * c - 2] , segments[2 * c - 1])
+End Function
+
+'draw a circular centre at x,y
+Function draw_diamond(x% , y% , h% , w%)
+	DrawLine(x - w / 2 , y , x , y + h / 2)
+	DrawLine(x , y + h / 2 , x + w / 2 , y)
+	DrawLine(x + w / 2 , y , x , y - h / 2)
+	DrawLine(x , y - h / 2 , x - w / 2 , y)
+End Function
+
+'draw a box centre at x,y
+Function draw_box(x% , y% , h% , w%)
+	DrawLine(x - w / 2 , y - h / 2 , x - w / 2 , y + h / 2)
+	DrawLine(x - w / 2 , y + h / 2 , x + w / 2 , y + h / 2)
+	DrawLine(x + w / 2 , y + h / 2 , x + w / 2 , y - h / 2)
+	DrawLine(x + w / 2 , y - h / 2 , x - w / 2 , y - h / 2)
+End Function	
 
 Function draw_dot( x%, y%, em%=False )
 	Local outer_r% = 5
@@ -233,31 +289,113 @@ Function draw_pointer( x%, y%, rot#, em%=False, r%=12, l%=24, fg%=$FFFFFF,bg%=$0
 	SetAlpha( a )
 EndFunction
 
-Function draw_weapon_mount( x%, y%, rot#, arc#, em%=False, r%=12, l%=24, ra%=36, fg%=$FFFFFF,bg%=$000000 )
+Function draw_weapon_mount( x%, y%, rot#, arc#, em%=False, slot_Type$ = "", slot_Size$ = "", draw_pointer% = True, r%=12, l%=36, ra%=24)
 	Local a# = GetAlpha()
-	'draw arc
-	SetColor((fg&$FF0000) Shr 16,(fg&$FF00) Shr 8,(fg&$FF))
-	SetAlpha( a*0.20 )
-	DrawOval( x - ra, y - ra, 2*ra, 2*ra )
-	SetAlpha( a*1.00 )
-	draw_arc( x, y, ra, rot+(arc/2), rot-(arc/2), arc/2 ) '1 segment per 2 degrees, assuming ra=36
-	'draw dot and pointer
-	SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
-	DrawOval( x-r, y-r, 2*r, 2*r )
+	Local r_tem% , g_tem% , b_tem%
+	Local bg%=$101010
+	GetColor(r_tem , g_tem , b_tem)
+	SetBlend (ALPHABLEND)
+	'check weapon size.
+	Local size% = 1
+	Select slot_Size
+		Case "LARGE"
+			size = 3
+		Case "MEDIUM"
+			size = 2
+		Case "SMALL"
+			size = 1
+	EndSelect
+	Local colors%[3] ; colors[0] = 255 ; colors[1] = 255 ; colors[2] = 255
+	SetLineWidth( 3 )
+	If em Then SetAlpha( a * 0.80 ) Else SetAlpha( a * 0.40 )
+	'draw weapon solt icon
+	Select slot_Type
+		Case "BALLISTIC"
+			colors[0] = 255 ; colors[1] = 215 ; colors[2] = 0
+			SetColor( colors[0] , colors[1] , colors[2] )
+			For Local i% = size Until 0 Step -1
+				draw_box (x , y , ra + i * 12 , ra + i * 12)
+			Next 
+		Case "ENERGY"
+			colors[0] = 70 ; colors[1] = 200 ; colors[2] = 255
+			SetColor( colors[0] , colors[1] , colors[2] )
+			For Local i% = size Until 0 Step -1
+				draw_circular (x , y , ra + i * 12 , 90)		
+			Next
+		Case "MISSILE"
+			colors[0] = 155 ; colors[1] = 255 ; colors[2] = 0
+			SetColor( colors[0] , colors[1] , colors[2] )
+			For Local i% = size Until 0 Step -1
+				draw_diamond (x , y , ra + 6 + i * 12 , ra + 6 + i * 12)
+			Next
+		Case "UNIVERSAL"
+			colors[0] = 255 ; colors[1] = 255 ; colors[2] = 255
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_box (x , y , ra + size * 12 , ra + size * 12)
+			draw_circular (x , y , ra + size * 12 , 90)
+			draw_diamond (x , y , ra + size * 12 , ra + size * 12)
+		Case "HYBRID"
+			colors[0] = 255 ; colors[1] = 165 ; colors[2] = 0
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_box (x , y , ra + size * 12 , ra + size * 12)
+			draw_circular (x , y , ra + size * 12 , 90)
+		Case "SYNERGY"
+			colors[0] = 0 ; colors[1] = 255 ; colors[2] = 200
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_circular (x , y , ra + size * 12 , 90)
+			draw_diamond (x , y , ra + size * 12 , ra + size * 12)
+		Case "COMPOSITE"
+			colors[0] = 215 ; colors[1] = 255 ; colors[2] = 0
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_box (x , y , ra + size * 12 , ra + size * 12)
+			draw_diamond (x , y , ra + size * 12 , ra + size * 12)
+		Case "STATION_MODULE"
+			colors[0] = 160 ; colors[1] = 32 ; colors[2] = 240
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_circular (x , y , ra + size * 12 , 6)
+		Case "DECORATIVE"
+			colors[0] = 255 ; colors[1] = 0; colors[2] = 0
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_circular (x , y , ra + 24 + size * 12 , 3)
+		Case "BUILT_IN"
+			colors[0] = 200 ; colors[1] = 200; colors[2] = 200
+			SetColor( colors[0] , colors[1] , colors[2] )
+			draw_circular (x , y , ra + size * 12 , 5)
+		Default
+			draw_pointer% = True
+	EndSelect
+	'draw firing arc
+	SetAlpha( a * 0.30 )	
 	SetLineWidth( 4 )
-	DrawLine( x, y, x + (l + 1)*Cos(rot), y - (l + 1)*Sin(rot) )
-	SetColor((fg&$FF0000) Shr 16,(fg&$FF00) Shr 8,(fg&$FF))
-	DrawOval( x-(r-2), y-(r-2), 2*(r-2), 2*(r-2) )
+	draw_arc( x , y , (ra + size * 12) , rot + (arc / 2) , rot - (arc / 2) , arc / 2 ) '1 segment per 2 degrees
+	DrawLine(x , y , x + (ra + size * 20) * Cos(rot + (arc / 2) ) , y - (ra + size * 20)  * Sin(rot + (arc / 2) ) )	
+	DrawLine(x , y , x + (ra + size * 20)  * Cos(rot - (arc / 2) ) , y - (ra + size * 20)  * Sin(rot - (arc / 2) ) )
 	SetLineWidth( 2 )
-	DrawLine( x, y, x + l*Cos(rot), y - l*Sin(rot) )
-	SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
-	DrawOval( x-(r-4), y-(r-4), 2*(r-4), 2*(r-4) )
-	'draw emphasis
-	If em
-		SetColor((fg&$FF0000) Shr 16,(fg&$FF00) Shr 8,(fg&$FF))
-		DrawOval( x-(r-3), y-(r-3), 2*(r-3), 2*(r-3) )
+	SetColor(255 , 255, 255)
+	draw_arc( x , y , (ra + size * 12) , rot + (arc / 2) , rot - (arc / 2) , arc / 2 ) '1 segment per 2 degrees
+	DrawLine(x , y , x + (ra + size * 20) * Cos(rot + (arc / 2) ) , y - (ra + size * 20)  * Sin(rot + (arc / 2) ) )	
+	DrawLine(x , y , x + (ra + size * 20) * Cos(rot - (arc / 2) ) , y - (ra + size * 20) * Sin(rot - (arc / 2) ) )
+	'draw dot and pointer
+	If draw_pointer
+		SetAlpha( a * 0.80 )
+		SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
+		DrawOval( x - r , y - r , 2 * r , 2 * r )
+		SetLineWidth( 4 )
+		DrawLine( x , y , x + (l + 1) * Cos(rot) , y - (l + 1) * Sin(rot) )
+		SetColor( colors[0] , colors[1] , colors[2] )
+		DrawOval( x - (r - 2) , y - (r - 2) , 2 * (r - 2) , 2 * (r - 2) )
+		SetLineWidth( 2 )
+		DrawLine( x , y , x + l * Cos(rot) , y - l * Sin(rot) )
+		SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
+		DrawOval( x - (r - 4) , y - (r - 4) , 2 * (r - 4) , 2 * (r - 4) )
+		'draw emphasis
+		If em
+			SetColor( colors[0] , colors[1] , colors[2] )
+			DrawOval( x - (r - 3) , y - (r - 3) , 2 * (r - 3) , 2 * (r - 3) )
+		EndIf
 	EndIf
 	'cleanup
+	SetColor(r_tem, g_tem, b_tem)
 	SetLineWidth( 1 )
 	SetAlpha( a )
 End Function
@@ -311,8 +449,8 @@ End Function
 
 Function draw_weapon_slot_info( ed:TEditor, data:TData, sprite:TSprite, weaponSlot:TStarfarerShipWeapon )
 	'prep and compose string data
-	Local wx% = sprite.sx + (weaponSlot.locations[0] + data.ship.center[1])*sprite.Scale
-	Local wy% = sprite.sy + (-weaponSlot.locations[1] + data.ship.center[0])*sprite.Scale
+	Local wx% = sprite.sx + (weaponSlot.locations[0] + data.ship.center[1]) * sprite.Scale
+	Local wy% = sprite.sy + (-weaponSlot.locations[1] + data.ship.center[0]) * sprite.Scale
 	Local wep_info:TextWidget = TextWidget.Create( ..
 		weaponSlot.size+"~n"+..
 		weaponSlot.type_+"~n"+..
@@ -331,12 +469,14 @@ EndFunction
 
 Function draw_assigned_weapon_info( ed:TEditor, data:TData, sprite:TSprite, weaponSlot:TStarfarerShipWeapon )
 	'prep and compose string data
-	Local wx% = sprite.sx + (weaponSlot.locations[0] + data.ship.center[1])*sprite.Scale
-	Local wy% = sprite.sy + (-weaponSlot.locations[1] + data.ship.center[0])*sprite.Scale
-	Local weapon_id$ = data.find_assigned_slot_weapon( weaponSlot.id )
+	Local wx% = sprite.sx + ( weaponSlot.locations[0] + data.ship.center[1]) * sprite.Scale
+	Local wy% = sprite.sy + ( - weaponSlot.locations[1] + data.ship.center[0]) * sprite.Scale
+	'0.9.1a module support
+	Local weapon_id$ = data.find_assigned_slot_weapon( weaponSlot.id , weaponSlot.is_station_module() )
 	Local current_weapon_str$ = ""
 	If weapon_id
-		'module support  -D
+		'module support -D
+		'weapon
 		If Not weaponSlot.is_station_module()
 			Local wep_stats:TMap = TMap( ed.stock_weapon_stats.ValueForKey( weapon_id ) )
 			If wep_stats
@@ -356,6 +496,7 @@ Function draw_assigned_weapon_info( ed:TEditor, data:TData, sprite:TSprite, weap
 					EndIf
 				EndIf
 			EndIf
+		'module 
 		Else
 			Local variant:TStarfarerVariant = TStarfarerVariant( ed.stock_variants.ValueForKey( weapon_id ) )
 			If variant
@@ -390,15 +531,15 @@ Function draw_assigned_weapon_info( ed:TEditor, data:TData, sprite:TSprite, weap
 EndFunction
 
 Function draw_variant_weapon_mount( wx%, wy%, weaponSlot:TStarfarerShipWeapon )
-	'set colors
-	Local fg_color% = $FFFFFF
-	Local bg_color% = $000000
-	If weaponSlot.is_builtin()
-		fg_color = $BFBFBF
-		bg_color = $3F3F3F
-	EndIf
+'	'set colors
+'	Local fg_color% = $FFFFFF
+'	Local bg_color% = $000000
+'	If weaponSlot.is_builtin()
+'		fg_color = $BFBFBF
+'		bg_color = $3F3F3F
+'	EndIf
 	'draw icon
-	draw_weapon_mount( wx, wy, weaponSlot.angle, weaponSlot.arc, True, 8, 16, 24, fg_color,bg_color )
+	draw_weapon_mount( wx, wy, weaponSlot.angle, weaponSlot.arc, False, weaponSlot.Type_, weaponSlot.size, False )
 EndFunction
 
 Function draw_builtin_weapon_slot_info( ed:TEditor, data:TData, sprite:TSprite, weaponSlot:TStarfarerShipWeapon )
@@ -446,10 +587,8 @@ Function draw_builtin_assigned_weapon_info( ed:TEditor, data:TData, sprite:TSpri
 EndFunction
 
 Function draw_builtin_weapon_mount( wx%, wy%, weaponSlot:TStarfarerShipWeapon )
-	Local fg_color% = $FFFFFF
-	Local bg_color% = $000000
 	'draw icon
-	draw_weapon_mount( wx, wy, weaponSlot.angle, weaponSlot.arc, True, 8, 16, 24, fg_color,bg_color )
+	draw_weapon_mount( wx, wy, weaponSlot.angle, weaponSlot.arc, False, weaponSlot.Type_, weaponSlot.size)
 EndFunction
 
 Function draw_collision_circle( data:TData, sprite:TSprite, position_at_cursor%=False, use_distance_to_cursor%=False )

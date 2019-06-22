@@ -8,6 +8,8 @@ Type TStarfarerShipWeapon
 	Field mount$	
 	Field size$
 	Field type_$
+	Field renderOrderMod#
+	
 	
 	'derived field
 	Method is_launch_bay%()
@@ -45,6 +47,7 @@ Type TStarfarerShipWeapon
 		mount = "TURRET"
 		size = "MEDIUM"
 		type_ = "ENERGY"
+		renderOrderMod = 0
 	End Method
 
 	Method Clone:TStarfarerShipWeapon()

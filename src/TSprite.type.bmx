@@ -13,7 +13,7 @@ Type TSprite
 	Field asx#, asy#	
 	
 	Method update()
-		If img <> NUll
+		If img <> Null
 			find_rect_verts( W_MID, H_MID, 0, 0, scale, pan_x, pan_y, zpan_x, zpan_y, asx, asy, sw, sh )
 			find_rect_verts( W_MID, H_MID, img.height, img.width, scale, pan_x, pan_y, zpan_x, zpan_y, sx, sy, sw, sh )
 		Else

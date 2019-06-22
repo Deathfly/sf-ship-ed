@@ -10,18 +10,22 @@ Function config_json_transforms()
   'TStarfarerShip
   json.add_transform( "stringify_ship", "$builtInWeapons:object", json.XJ_DELETE,, predicate_omit_if_empty_object )
   json.add_transform( "stringify_ship", "$builtInMods:array", json.XJ_DELETE,, predicate_omit_if_empty_array )
+  json.add_transform( "stringify_ship", "$moduleAnchor:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
   json.add_transform( "stringify_ship", "$coversColor:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
   'TStarfarerShipWeapon
   json.add_transform( "parse_ship", "$weaponSlots:array/:object/$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_ship", "$weaponSlots:array/:object/$type_:string", json.XJ_RENAME, "type" )
-  json.add_transform( "stringify_ship", "$weaponSlots:array/:object/$position:array", json.XJ_DELETE,, predicate_omit_position )
+  json.add_transform( "stringify_ship" , "$weaponSlots:array/:object/$position:array" , json.XJ_DELETE , , predicate_omit_position )
+  json.add_transform( "stringify_ship", "$weaponSlots:array/:object/#renderOrderMod:number", json.XJ_DELETE,, predicate_omit_if_equals_zero )
+
   'TStarfarerCustomEngineStyleSpec
   json.add_transform( "parse_ship", "$engineSlots:array/:object/$styleSpec:object/$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_ship", "$engineSlots:array/:object/$styleSpec:object/$type_:string", json.XJ_RENAME, "type" )
   json.add_transform( "stringify_ship", "$engineSlots:array/:object/$styleSpec:object", json.XJ_DELETE,, predicate_omit_styleSpec )
   json.add_transform( "stringify_ship", "$engineSlots:array/:object/$styleId:string", json.XJ_DELETE,, predicate_omit_styleId )
   'TStarfarerVariant
-  json.add_transform( "stringify_variant", "$goalVariant", json.XJ_CONVERT, "boolean" )
+  json.add_transform( "stringify_variant" , "$goalVariant" , json.XJ_CONVERT , "boolean" )
+  json.add_transform( "stringify_variant" , "$modules:object", json.XJ_DELETE,, predicate_omit_if_empty_object )
   'TStarfarerSkin
   json.add_transform( "parse_skin", "$weaponSlotChanges:object/:object/$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_skin", "$weaponSlotChanges:object/:object/$type_:string", json.XJ_RENAME, "type" )
@@ -75,7 +79,10 @@ Function config_json_transforms()
   json.add_transform( "stringify_weapon", "$requiresFullCharge", json.XJ_CONVERT, "boolean" )
   json.add_transform( "stringify_weapon", "$beamFireOnlyOnFullCharge", json.XJ_CONVERT, "boolean" )
   json.add_transform( "stringify_weapon", "$convergeOnPoint", json.XJ_CONVERT, "boolean" )
-  json.add_transform( "stringify_weapon", "$darkCore", json.XJ_CONVERT, "boolean" )
+  json.add_transform( "stringify_weapon" , "$darkCore" , json.XJ_CONVERT , "boolean" )
+  json.add_transform( "stringify_weapon" , "$noShieldImpactSounds" , json.XJ_CONVERT , "boolean" )
+  json.add_transform( "stringify_weapon" , "$noNonShieldImpactSounds" , json.XJ_CONVERT , "boolean" )
+  json.add_transform( "stringify_weapon" , "$noImpactSounds" , json.XJ_CONVERT , "boolean" )
   'TStarfarerWeapon specClass <> beam
   json.add_transform( "stringify_weapon", "$fringeColor", json.XJ_DELETE,, predicate_omit_if_not_specClass_beam )
   json.add_transform( "stringify_weapon", "$coreColor", json.XJ_DELETE,, predicate_omit_if_not_specClass_beam )

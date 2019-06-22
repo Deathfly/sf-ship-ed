@@ -165,8 +165,8 @@ Type json
 	Const SEL_NUMBER$  = "number"
 	Const SEL_STRING$  = "string"
 	Const SEL_ARRAY$   = "array"
-	Const SEL_OBJECT$ = "object"
-	Const SEL_EMUN$ = "emun"
+	Const SEL_OBJECT$  = "object"
+	Const SEL_EMUN$    = "emun"
 	
 	'////////////////////////////////////////////////////////////////////////////
 
@@ -1053,7 +1053,7 @@ Type TString Extends TValue
 		Return val
 	EndFunction
 	
-	Function CreateFromString:TString (input$)
+	Function CreateFromString:TString (Input$)
 		Local str:TString = New TString
 		str.value = Input
 		Return str
@@ -1087,7 +1087,7 @@ Type TEnum Extends TValue
 			decoded_value :+ char 'NORMAL STRING CHARACTER
 		Else
 			json_error( json.LOG_ERROR + " expected string at position " + (cursor - 1) + json.ShowPosition(encoded, (cursor - 1) ) )
-		endif
+		EndIf
 		' Enumeration Mode
 		' This means AlphaNumeric or Underscore characters ONLY
 		' Any other characters encountered from this point on will trigger the end of the string
@@ -1141,7 +1141,7 @@ Type TEnum Extends TValue
 		Return val
 	EndFunction
 	
-	Function CreateFromString:TEnum (input$)
+	Function CreateFromString:TEnum (Input$)
 		Local emun:TEnum = New TEnum
 		emun.value = Input
 		Return emun

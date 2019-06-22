@@ -17,6 +17,7 @@ Type TModalSetVariantWings Extends TSubroutine
 		initialize_wing_chooser( ed, data )
 		update_wing_chooser( ed, data )
 		SS.reset()
+		FlushEvent()
 	EndMethod
 
 	Method Update( ed:TEditor, data:TData, sprite:TSprite )
@@ -175,8 +176,9 @@ Type TModalSetVariantWings Extends TSubroutine
 				EndSelect
 			Case EVENT_GADGETACTION, EVENT_MENUACTION
 				Select EventSource()
-					Case functionMenu[MENU_FUNCTION_EXIT]
+					Case modeMenu[MENU_MODE_VARIANT], functionMenu[MENU_FUNCTION_EXIT]
 						ed.variant_wing_i = - 1
+						sub_set_variant.Activate( ed, data, sprite )
 				EndSelect
 		End Select
 		'bounds enforce (wrap top/bottom)

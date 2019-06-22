@@ -18,6 +18,7 @@ Type TStarfarerShip
 	Field builtInMods$[]
 	Field coversColor$
 	Field builtInWings$[]
+	Field moduleAnchor#[]
 	
 	Method New()
 		bounds = New Float[0]
@@ -32,7 +33,7 @@ Type TStarfarerShip
 		style = "LOW_TECH"
 		builtInWeapons = CreateMap()
 		builtInMods = New String[0]
-	  builtInWings = New String[0]
+	  	builtInWings = New String[0]
 	End Method
 	
 	Method Clone:TStarfarerShip(dst:TStarfarerShip = Null)

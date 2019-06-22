@@ -17,7 +17,7 @@ Type TWeaponDrawer
 	End Method
 	
 	' do not support module on module yet
-	Method queue_module_weapons(renderQueue:TList Var, weapon_slot:TStarfarerShipWeapon, variantID$, data:TData, sprite:TSprite)
+	Method queue_module_weapons(renderQueue:TList Var, weapon_slot:TStarfarerShipWeapon, variantID$, data:TData, sprite:TSprite, render_Order_Mod% = 0)
 		Local variant_tem:TStarfarerVariant = TStarfarerVariant( ed.stock_variants.ValueForKey( variantID ) )
 		If Not variant_tem Then Return
 		Local hullID_tem$ = variant_tem.hullId
@@ -28,9 +28,17 @@ Type TWeaponDrawer
 		Local x# = weapon_slot.locations[0]
 		Local y# = weapon_slot.locations[1]
 		Local facing# = weapon_slot.angle
+		Local x_Anchor# = 0
+		Local y_Anchor# = 0
+		If ship_tem.moduleAnchor And ship_tem.moduleAnchor.length = 2
+			x_Anchor:- ship_tem.moduleAnchor[0]
+			y_Anchor:- ship_tem.moduleAnchor[1]
+			rotate_vector2f(x_Anchor, y_Anchor, facing)
+		EndIf
 		Local variantRenderData:TWeaponRenderData = New TWeaponRenderData
 		variantRenderData.inti_for_module(weapon_slot, variant_tem)
-		variantRenderData.set_facing_and_offset(x, y, facing)
+		variantRenderData.set_facing_and_offset(0 , 0 , facing) ' only the facing will pass in
+		variantRenderData.renderOrder :+ render_Order_Mod
 		renderQueue.AddLast(variantRenderData)
 		Local weapons:TMap = variant_tem.getAllWeapons()
 			For Local i% = 0 Until ship_tem.weaponSlots.length
@@ -42,8 +50,8 @@ Type TWeaponDrawer
 				Local weapon:TStarfarerWeapon = TStarfarerWeapon (ed.stock_weapons.ValueForKey(weaponID) ) ' could be null but it's ok
 				If weapon
 					Local renderData:TWeaponRenderData = New TWeaponRenderData
-					renderData.init(weaponslot, weapon)
-					renderData.set_facing_and_offset(x, y, facing)
+					renderData.init(weaponslot , weapon)
+					renderData.set_facing_and_offset(x + x_Anchor, y + y_Anchor, facing)
 					renderData.set_is_station_module_weapon()
 					renderQueue.AddLast(renderData)
 				EndIf
@@ -60,28 +68,45 @@ Type TWeaponDrawer
 					If weapon
 						Local renderData:TWeaponRenderData = New TWeaponRenderData
 						renderData.init(weaponslot, weapon)
-						renderQueue.AddLast(renderData)						EndIf
+						renderQueue.AddLast(renderData)
+					EndIf
 				EndIf
 			Next
 		Else
 			Local weapons:TMap = data.variant.getAllWeapons()
 			For Local i% = 0 Until data.ship.weaponSlots.length
 				Local weaponslot:TStarfarerShipWeapon = data.ship.weaponSlots[i]
-				'well, I did the null check later so don't needs in these part...i hope
+				'well, I will do the null check later so don't needs in these part...i hope
 				Local weaponID$
-				weaponID = String(weapons.ValueForKey(weaponslot.id) ) 'load from weapon groups frist
-				If Not weaponID Then weaponID = String(data.ship.builtInWeapons.ValueForKey(weaponslot.id) ) 'then, try the built-in list
-				If weaponID
-					If weaponslot.type_ <> "STATION_MODULE"
+				' modified for 0.9.1a module support
+				If Not weaponslot.is_station_module()
+					weaponID = String(weapons.ValueForKey(weaponslot.id) ) 'load from weapon groups frist
+					If Not weaponID Then weaponID = String(data.ship.builtInWeapons.ValueForKey(weaponslot.id) ) 'then, try the built-in list
+					If weaponID
 						Local weapon:TStarfarerWeapon = TStarfarerWeapon (ed.stock_weapons.ValueForKey(weaponID) ) ' could be null but it's ok
 						If weapon
 							Local renderData:TWeaponRenderData = New TWeaponRenderData
 							renderData.init(weaponslot, weapon)
 							renderQueue.AddLast(renderData)	
-						EndIf
-					Else
-						queue_module_weapons(renderQueue, weaponslot, weaponID, data, sprite)
-					EndIf 						
+						EndIf						
+					EndIf
+				Else
+					Local i%
+					For i = 0 Until data.variant.modules.length
+						Local ship_Module:Tmap = data.variant.modules[i]
+						Local value:Object = MapValueForKey( ship_Module , weaponslot.id )				
+						If value <> Null
+						'TODO: Something wrong within the rejson. Value in TMap Array return a wrong type here. I use a work around method here. But we'd better check it out later.
+							If String( value ) <> ""
+								weaponID = String( value )
+								Exit
+							Else
+								weaponID = TString( value ).value
+								Exit
+							EndIf
+						EndIf 
+					Next
+					If weaponID Then queue_module_weapons(renderQueue, weaponslot, weaponID, data, sprite, -i)
 				EndIf
 			Next			
 		EndIf
@@ -311,7 +336,7 @@ Type TWeaponDrawer
 				EndIf
 				If Not weaponID Then Return Null
 				Local weapon:TStarfarerWeapon = TStarfarerWeapon (ed.stock_weapons.ValueForKey(weaponID) )	
-				If Not weapon Then Return null
+				If Not weapon Then Return Null
 				If weapon.numFrames <= 1 Then Return Null
 				Local anime:TAnime = New TAnime
 				anime.init( weaponSlot_i, weaponSlot, weaponID, weapon )
@@ -392,7 +417,9 @@ Type TWeaponDrawer
 			Local skin:TStarfarerSkin = TStarfarerSkin(ed.stock_skins.ValueForKey(hullID) )
 			If skin
 				img_path = resource_search(skin.spriteName)
-				hull = TStarfarerShip(ed.stock_ships.ValueForKey(skin.baseHullId) )	
+				hull = TStarfarerShip(ed.stock_ships.ValueForKey(skin.baseHullId) )
+				'hmm, seems like skin can have no spriteName spec til 0.9.1a, so I needs to a roll back check 
+				If Not img_path Then img_path = resource_search(hull.spriteName)
 			EndIf
 		EndIf
 		Local variantIMG:TImage
@@ -401,6 +428,10 @@ Type TWeaponDrawer
 			'calculate the center point offset
 			Local x# = (variantIMG.width * 0.5) - hull.center[0]
 			Local y# = (variantIMG.height * 0.5) - hull.center[1]
+			If hull.moduleAnchor And hull.moduleAnchor.length = 2
+				x:- hull.moduleAnchor[1]
+				y:- hull.moduleAnchor[0]			
+			EndIf 
 			rotate_vector2f(y, x, rotation)
 			'calc. coords
 			x = sprite.sx + (data.ship.center[1] + weaponSlot.locations[0] + x ) * sprite.scale
@@ -629,7 +660,7 @@ Type TWeaponRenderData
 		Local offset_weight# = Abs weaponSlot.locations[0] / 100000 + Abs weaponSlot.locations[1] / 10000
 		renderOrder :- offset_weight
 		'hope this is right
-		renderOrder :- 20
+		renderOrder :- 100
 	End Method
 
 	Method set_facing_and_offset(x#, y#, facing_arc#)

@@ -45,6 +45,8 @@ Type TModalSetVariant Extends TSubroutine
 	Field group_i%
 	Field group_offsets%[]
 	Field group:TStarfarerVariantWeaponGroup
+	'0.9.1a module support
+	Field Ship_Module:Tmap
 	Field wep_g$
 	Field wep_g_a$
 	Field wep_g_i$
@@ -78,9 +80,9 @@ Type TModalSetVariant Extends TSubroutine
 		ed.variant_hullMod_i = - 1
 		ed.group_field_i = - 1
 		ni = - 1
-    autoload_ship_image( ed, data, sprite ) ' skin or ship?
-    RadioMenuArray( MENU_MODE_VARIANT, modeMenu )
-    rebuildFunctionMenu(MENU_MODE_VARIANT)
+    		autoload_ship_image( ed, data, sprite ) ' skin or ship?
+    		RadioMenuArray( MENU_MODE_VARIANT, modeMenu )
+    		rebuildFunctionMenu(MENU_MODE_VARIANT)
 		DebugLogFile(" Activate Variant Editor")
 	EndMethod
 
@@ -131,8 +133,8 @@ Type TModalSetVariant Extends TSubroutine
 			For weapon_slot_id = EachIn group.weapons.Keys()
 				'Local weapon_slot:TStarfarerShipWeapon = data.find_weapon_slot_by_id( weapon_slot_id )
 				'If weapon_slot And weapon_slot.is_visible_to_variant()
-					all_assigned_weapon_slot_ids.Insert( weapon_slot_id, String( group.weapons.ValueForKey( weapon_slot_id )) )
-					count :+ 1
+				all_assigned_weapon_slot_ids.Insert( weapon_slot_id, String( group.weapons.ValueForKey( weapon_slot_id )) )
+				count :+ 1
 				'EndIf
 			Next
 		Next
@@ -204,6 +206,24 @@ Type TModalSetVariant Extends TSubroutine
 			For weapon_slot_id = EachIn group.weapons.Keys()
 				If weapon_slot.id = weapon_slot_id
 					weapon_id = String( group.weapons.ValueForKey( weapon_slot_id ) )
+					For i = 0 Until weapon_list.length
+						If weapon_list[i] = weapon_id
+							ed.select_weapon_i = i
+							found = True
+							Exit
+						EndIf
+					Next
+					If found Then Exit
+				EndIf
+			Next
+			If found Then Exit
+		Next
+		'0.9.1a new module assign thingnish.
+		'TODO: needs a check here
+		For Ship_Module = EachIn data.variant.modules
+			For weapon_slot_id = EachIn Ship_Module.Keys()
+				If weapon_slot.id = weapon_slot_id
+					weapon_id = String( Ship_Module.ValueForKey( weapon_slot_id ) )
 					For i = 0 Until weapon_list.length
 						If weapon_list[i] = weapon_id
 							ed.select_weapon_i = i
@@ -343,7 +363,7 @@ Type TModalSetVariant Extends TSubroutine
 			Select EventData()
 			Case KEY_ENTER
 				data.unassign_weapon_from_slot( weapon_slot.id )
-				data.assign_weapon_to_slot( weapon_slot.id, weapon_list[ed.select_weapon_i], 0 )
+				data.assign_weapon_to_slot( weapon_slot.id, weapon_list[ed.select_weapon_i], 0, weapon_slot.is_station_module() )
 				data.update_variant()
 				ed.weapon_lock_i = - 1
 				data.hold_snapshot(False)
@@ -369,17 +389,17 @@ Type TModalSetVariant Extends TSubroutine
 					ed.select_weapon_i = 0
 				EndIf
 				data.unassign_weapon_from_slot( weapon_slot.id )
-				data.assign_weapon_to_slot( weapon_slot.id, weapon_list[ed.select_weapon_i], 0 )
+				data.assign_weapon_to_slot( weapon_slot.id, weapon_list[ed.select_weapon_i], 0, weapon_slot.is_station_module() )
 				data.update_variant()
 			EndIf
 		Case EVENT_GADGETACTION, EVENT_MENUACTION
 			Select EventSource()
-			Case functionMenu[MENU_FUNCTION_EXIT]
+			Case functionMenu[MENU_FUNCTION_EXIT], functionMenuSub[MENU_MODE_VARIANT][MENU_SUBFUNCTION_VARIANT_WEAPONGROUPS]
 				ed.weapon_lock_i = - 1
 				data.hold_snapshot(False)
 				updata_weapondrawermenu(ed)
 			Case functionMenu[MENU_FUNCTION_REMOVE]
-				data.unassign_weapon_from_slot( weapon_slot.id )
+				data.unassign_weapon_from_slot( weapon_slot.id, weapon_slot.is_station_module())
 				data.update_variant()
 				ed.weapon_lock_i = - 1
 				data.hold_snapshot(False)
@@ -473,7 +493,7 @@ Type TModalSetVariant Extends TSubroutine
 	Method update_default_mode( ed:TEditor, data:TData, sprite:TSprite )
 		fluxMods_max = ed.get_max_fluxMods( data.ship.hullSize )
 		hullMods_count = count_keys( ed.stock_hullmod_stats )
-		'get input
+		'MAKR: default_mode get input
 		Select EventID()
 		Case EVENT_MOUSEDOWN, EVENT_MOUSEUP, EVENT_MOUSEMOVE
 			sprite.get_img_xy( MouseX, MouseY, img_x, img_y )
@@ -488,8 +508,7 @@ Type TModalSetVariant Extends TSubroutine
 					ed.weapon_lock_i = ni
 					data.hold_snapshot(True)
 					initialize_weapon_assignment_list( ed, data )
-					SS.reset()
-					
+					SS.reset()					
 				EndIf
 			EndIf
 		Case EVENT_GADGETACTION, EVENT_MENUACTION
@@ -555,26 +574,18 @@ Type TModalSetVariant Extends TSubroutine
 		
 		'FIRST PASS: draw text boxes but make "really faint" if zoomed out too far
 		For i = 0 Until data.ship.weaponSlots.Length
-			If Not data.ship.weaponSlots[i].is_visible_to_variant()
-				Continue 'skip these
-			EndIf
+			If Not data.ship.weaponSlots[i].is_visible_to_variant() Then Continue 'skip these slots should not be visible
 			nearest = (i = ni)
-			If Not nearest And ed.weapon_lock_i <> -1
-				Continue ' do not draw other weapons when selecting a weapon
-			EndIf
+			If Not nearest And ed.weapon_lock_i <> -1 Then Continue ' do not draw other weapons when selecting a weapon
 			weapon_slot = data.ship.weaponSlots[i]
 			wx = sprite.sx + ( weapon_slot.locations[0] + data.ship.center[1]) * sprite.scale
-			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0])*sprite.Scale
+			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0]) * sprite.Scale
 			SetRotation( 0 )
 			SetScale( 1, 1 )
 			SetAlpha( 1 )
-			If Not nearest
-				SetAlpha( Min( 0.5, 0.5*(sprite.scale/3.0) ))
-			EndIf
+			If Not nearest Then SetAlpha( Min( 0.5, 0.5*(sprite.scale/3.0) ))
 			draw_weapon_slot_info( ed, data, sprite, weapon_slot )
-			If ed.weapon_lock_i = -1 'the select-a-weapon list will be drawn instead if it's non-null
-				draw_assigned_weapon_info( ed, data, sprite, weapon_slot )
-			EndIf
+			If ed.weapon_lock_i = -1 Then draw_assigned_weapon_info( ed, data, sprite, weapon_slot )'the select-a-weapon list will be drawn instead if it's non-null
 		Next
 		
 		'SECOND PASS: draw slot mount icons
@@ -603,8 +614,8 @@ Type TModalSetVariant Extends TSubroutine
 		'THIRD PASS: draw the nearest weapon mount, if there is one set
 		If ni <> - 1
 			weapon_slot = data.ship.weaponSlots[ni]
-			wx = sprite.sx + (weapon_slot.locations[0] + data.ship.center[1])*sprite.Scale
-			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0])*sprite.Scale
+			wx = sprite.sx + (weapon_slot.locations[0] + data.ship.center[1]) * sprite.Scale
+			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0]) * sprite.Scale
 			draw_weapon_slot_info( ed,data,sprite, weapon_slot )
 			If ed.weapon_lock_i = -1 'the select-a-weapon list will be drawn instead if it's non-null
 				draw_assigned_weapon_info( ed,data,sprite, weapon_slot )

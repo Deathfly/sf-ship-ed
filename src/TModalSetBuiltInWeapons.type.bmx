@@ -149,7 +149,6 @@ Type TModalSetBuiltInWeapons Extends TSubroutine
 
 	Method Draw( ed:TEditor, data:TData, sprite:TSprite ) 
 		If Not data.ship.center Then Return
-
 		'prepare to show list of weapons
 		If ed.weapon_lock_i <> -1
 			weapon_slot = data.ship.weaponSlots[ed.weapon_lock_i]
@@ -187,58 +186,40 @@ Type TModalSetBuiltInWeapons Extends TSubroutine
 		For Local i% = 0 Until data.ship.weaponSlots.Length
 			'For decorative edit mode
 			If Not decorative_mode% 'built-in mode
-				If Not data.ship.weaponSlots[i].is_builtin()
-					Continue 'skip non-built-in slots
-				EndIf
+				If Not data.ship.weaponSlots[i].is_builtin() Then Continue 'skip non-built-in slots
 			Else 'decorative mode
-				If Not data.ship.weaponSlots[i].is_decorative()
-					Continue 'skip non-decorative slots
-				End If
+				If Not data.ship.weaponSlots[i].is_decorative() Then Continue 'skip non-decorative slots
 			End If
 			nearest = (i = ni)
-			If Not nearest And ed.weapon_lock_i <> -1
-				Continue ' do not draw other weapons when selecting a weapon
-			EndIf
+			If Not nearest And ed.weapon_lock_i <> -1 Then Continue ' do not draw other weapons when selecting a weapon
 			weapon_slot = data.ship.weaponSlots[i]
 			wx = sprite.sx + ( weapon_slot.locations[0] + data.ship.center[1])*sprite.Scale
 			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0])*sprite.Scale
 			SetRotation( 0 )
 			SetScale( 1, 1 )
 			SetAlpha( 0.8 )
-			If Not nearest
-				SetAlpha( Min( 0.4, 0.5*(sprite.scale/3.0) ))
-			EndIf
+			If Not nearest Then SetAlpha( Min( 0.4, 0.5*(sprite.scale/3.0) ))
 			draw_builtin_weapon_slot_info( ed,data,sprite, weapon_slot )
-			If ed.weapon_lock_i = -1 'the select-a-weapon list will be drawn instead if it's non-null
-				draw_builtin_assigned_weapon_info( ed, data, sprite, weapon_slot )
-			EndIf
+			If ed.weapon_lock_i = -1 Then draw_builtin_assigned_weapon_info( ed, data, sprite, weapon_slot ) 'the select-a-weapon list will be drawn instead if it's non-null
 		Next
 		
 		'SECOND PASS: draw slot mount icons
 		For Local i% = 0 Until data.ship.weaponSlots.Length
 			'For decorative edit mode
 			If Not decorative_mode% 'built-in mode
-				If Not data.ship.weaponSlots[i].is_builtin()
-					Continue 'skip non-built-in slots
-				EndIf
+				If Not data.ship.weaponSlots[i].is_builtin() Then Continue 'skip non-built-in slots
 			Else 'decorative mode
-				If Not data.ship.weaponSlots[i].is_decorative()
-					Continue 'skip non-decorative slots
-				End If
+				If Not data.ship.weaponSlots[i].is_decorative() Then Continue 'skip non-decorative slots
 			End If
 			nearest = (i = ni)
-			If Not nearest And ed.weapon_lock_i <> -1
-				Continue ' do not draw other weapons when selecting a weapon
-			EndIf
+			If Not nearest And ed.weapon_lock_i <> -1 Then Continue ' do not draw other weapons when selecting a weapon
 			weapon_slot = data.ship.weaponSlots[i]
 			wx = sprite.sx + ( weapon_slot.locations[0] + data.ship.center[1])*sprite.Scale
 			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0])*sprite.Scale
 			SetRotation( 0 )
 			SetScale( 1, 1 )
 			SetAlpha( 0.8 )
-			If Not nearest
-				SetAlpha( 0.4 )
-			EndIf
+			If Not nearest Then SetAlpha( 0.4 )
 			draw_builtin_weapon_mount( wx, wy, weapon_slot )
 		Next
 		SetAlpha( 1 )
@@ -247,12 +228,12 @@ Type TModalSetBuiltInWeapons Extends TSubroutine
 			weapon_slot = data.ship.weaponSlots[ni]
 			wx = sprite.sx + (weapon_slot.locations[0] + data.ship.center[1])*sprite.Scale
 			wy = sprite.sy + (-weapon_slot.locations[1] + data.ship.center[0])*sprite.Scale
-			For ship_weapon_slot_id = EachIn data.ship.builtInWeapons.Keys()
-				If ship_weapon_slot_id = weapon_slot.id
-					weapon_id = String( data.ship.builtInWeapons.ValueForKey( ship_weapon_slot_id ))
-					Exit
-				EndIf
-			Next
+'			For ship_weapon_slot_id = EachIn data.ship.builtInWeapons.Keys()
+'				If ship_weapon_slot_id = weapon_slot.id
+'					weapon_id = String( data.ship.builtInWeapons.ValueForKey( ship_weapon_slot_id ))
+'					Exit
+'				EndIf
+'			Next
 			draw_builtin_weapon_slot_info( ed,data,sprite, weapon_slot )
 			If Not weapon_list_widget 'the select-a-weapon list will be drawn instead if it's non-null
 				draw_builtin_assigned_weapon_info( ed,data,sprite, weapon_slot )

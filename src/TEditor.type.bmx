@@ -57,6 +57,7 @@ Type TEditor
 	Field ico_exit:TImage
 	Field engineflame:TImage
 	Field engineflamecore:TImage
+	Field circle:TImage
 	'stock (and mod) data
 	Field stock_ships:TMap                    '<String,Object>  hullId --> TStarfarerShip
 	Field stock_variants:TMap                 '<String,Object>  variantId --> TStarfarerVariant
@@ -456,7 +457,8 @@ Type TEditor
 		'for modules
 		Else
 			For Local variant_id$ = EachIn stock_variants.Keys()
-				matches = matches + [variant_id]
+				matches = matches[..(matches.length + 1)]
+				matches[matches.length - 1] = variant_id
 			Next
 		EndIf
 		Return matches

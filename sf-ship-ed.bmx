@@ -1,6 +1,6 @@
 Rem
 
-STARSECTOR Ship&Weapon Editor
+STARSECTOR Ship&Weapon Editor 3.0.0 pre-alpha 4
 Created by Trylobot
 Updated by Deathfly
 
@@ -42,6 +42,7 @@ Incbin "assets/ico_mirr.png"
 Incbin "assets/ico_exit.png"
 Incbin "assets/engineflame32.png"
 Incbin "assets/engineflamecore32.png"
+Incbin "assets/64x_circle.png"
 Incbin "release/ENG.ini"
 
 Const FLOAT_MAX# = 10e38:Float
@@ -101,7 +102,7 @@ Include "src/TWeaponDrawer.bmx"
 Include "src/TWingrenderer.bmx"
 
 '/////////////////////////////////////////////
-'MARK init APP var
+'MARK: init APP var
 Global DEBUG_LOG_FILE:TStream = WriteStream( "sf-ship-ed.log" )
 Global LOC:TMaxGuiLanguage
 SetGraphicsDriver GLMax2DDriver()
@@ -133,7 +134,7 @@ Const MAX_VARIANT_WEAPON_GROUPS% = 5
 Const ENGINE_MANEUVERING_JETS_CONTRAIL_SIZE% = 128 'hack: makes a custom engine style into a "maneuvering jet"
 
 '////////////////////////////////////////////////
-'MARK init main windows
+'MARK: init main windows
 Global MainWindow:TGadget = CreateWindow("{{wt_main}}", 200, 0, W_MAX, H_MAX, Null, WINDOW_TITLEBAR | WINDOW_MENU | WINDOW_RESIZABLE | WINDOW_ACCEPTFILES )
 Global CSVEditor:TGadget = Null
 H_MAX = MainWindow.ClientHeight()
@@ -152,7 +153,7 @@ SetBlend( ALPHABLEND )
 'DATA_FONT = LoadImageFont( "incbin::assets/consola.ttf", APP.data_font_size, SMOOTHFONT )
 'SetImageFont( FONT )
 '////////////////////////////////////////////////
-'MARK UTF-8 and Font support testing
+'MARK: UTF-8 and Font support
 If APP.UTF8_support
   CODE_MODE = 2
 EndIf
@@ -168,17 +169,17 @@ Else
 EndIf
 '////////////////////////////////////////////////
 
-'MARK display loading message
+'MARK: display loading message
 Cls
 draw_string( "Loadin' ...", W_MID, H_MID,,, 0.5, 0.5 )
 Flip( 1 )
 
 '////////////////////////////////////////////////
-'MARK json
+'MARK: json
 config_json_transforms()
 
 '////////////////////////////////////////////////
-'MARK Local var init
+'MARK: Local var init
 
 Global ed:TEditor = New TEditor
 ed.show_help = True
@@ -189,11 +190,11 @@ ed.target_sprite_scale = sprite.scale
 
 Global data:TData = New TData
 
-'MARK init UI
+'MARK: init UI
 init_gui_menus()
 rebuildFunctionMenu(MENU_MODE_SHIP) 'default mode: ship
 
-'MARK init help
+'MARK: init help
 load_help()
 
 '////////////////////////////////////////////////
@@ -224,7 +225,7 @@ load_ui( ed )
 load_starfarer_data( ed, data )
 
 '////////////////////////////////////////////////
-'MARK init modals
+'MARK: init modals
 Global sub_set_ship:TModalSetShip = New TModalSetShip
 Global sub_set_ship_center:TModalSetShipCenter = New TModalSetShipCenter
 Global sub_set_bounds:TModalSetBounds = New TModalSetBounds
@@ -247,19 +248,19 @@ Global sub_weapon_csv:TModalSetWeaponCSV = New TModalSetWeaponCSV
 Global SS:TSmoothScroll = New TSmoothScroll
 
 '////////////////////////////////////////////////
-'MARK init FPS limiter
+'MARK: init FPS limiter
 Global Lmt_FPS% = APP.fps_limit
 If Not Lmt_FPS Then Lmt_FPS = DesktopHertz()
 If Not Lmt_FPS Or Lmt_FPS < 1 Then Lmt_FPS = 60
 Global Timer:TTimer = CreateTimer(Lmt_FPS)
 '////////////////////////////////////////////////
-'MARK init weapon drawer
+'MARK: init weapon renderer
 Global WD:TWeaponDrawer = New TWeaponDrawer
 
-'MARK inti wing renderer
+'MARK: inti wing renderer
 Global WR:TWingRenderer = New TWingRenderer
 
-'MARK Enable Polled Input for test
+'MARK: Enable Polled Input for test
 'EnablePolledInput(Canvas)
 
 data.changed = False
@@ -268,12 +269,12 @@ MainWindow.SetSensitivity(SENSITIZE_ALL)
 updata_weapondrawermenu(ed)
 '//////////////////////////////////////////////////////////////////////////////
 '//////////////////////////////////////////////////////////////////////////////
-'/////// MARK MAIN LOOP  //////////////////////////////////////////////////////
+' MARK: MAIN LOOP
 '//////////////////////////////////////////////////////////////////////////////
 '//////////////////////////////////////////////////////////////////////////////
 
 Repeat
-  'MARK Events
+  'MARK: Events
   'TODO adding Events
   WaitEvent()
   'instaquit
@@ -490,7 +491,7 @@ Until AppTerminate()
 
 '//////////////////////////////////////////////////////////////////////////////
 '//////////////////////////////////////////////////////////////////////////////
-'/////// MARK MAIN LOOP END   /////////////////////////////////////////////////
+'MARK: MAIN LOOP END
 '//////////////////////////////////////////////////////////////////////////////
 '//////////////////////////////////////////////////////////////////////////////
 
@@ -510,7 +511,7 @@ EndIf
 End
 
 '////////////////////////////////////////////////
-'MARK Function set
+'MARK: Function set
 
 Function check_sub_routines% ( ed:TEditor, data:TData, sprite:TSprite )
   Local hit% = True
@@ -586,7 +587,7 @@ Function check_sub_routines% ( ed:TEditor, data:TData, sprite:TSprite )
   Return hit
 End Function
 
-'MARK GAlist check
+'MARK: GAlist check
 '-----------------------
 ' Return true if the input EventSource(Object) hit the checkes, so we can skip the rest
 Function check_file_menu%(ed:TEditor, data:TData, sprite:TSprite)
@@ -975,52 +976,71 @@ Function check_zoom_and_pan(ed:TEditor, data:TData, sprite:TSprite)
             z_delta :+ 1
           Case functionMenu[MENU_FUNCTION_ZOOMOUT]
             z_delta :- 1
+		'reset zoom and pan
+		Case functionMenu[MENU_FUNCTION_RESET]
+		 sprite.pan_x = 0
+		 sprite.pan_y = 0
+		 sprite.zpan_x = 0
+		 sprite.zpan_y = 0
+		 ed.target_zpan_x = 0
+		 ed.target_zpan_y = 0
+		 ed.selected_zoom_level = 3
+		 ed.target_sprite_scale = ZOOM_LEVELS[ed.selected_zoom_level]
         EndSelect
     EndSelect
 End Function
 
 Function update_zoom( ed:TEditor, data:TData, sprite:TSprite )
-  If z_delta <> 0
-    Local img_x#, img_y#
-    sprite.get_img_xy( MouseX, MouseY, img_x, img_y )
-    'modify zoom
-    If z_delta > 0 'ZOOMING IN
-      ed.selected_zoom_level :+ 1
-      If ed.selected_zoom_level >= ZOOM_LEVELS.length
-        ed.selected_zoom_level = ZOOM_LEVELS.length - 1
-      End If
-    Else 'z_delta < 0  'ZOOMING OUT
-      ed.selected_zoom_level :- 1
-      If ed.selected_zoom_level < 0
-        ed.selected_zoom_level = 0
-      End If
-    End If
-    'sprite.scale = ZOOM_LEVELS[ed.selected_zoom_level]
-    ed.target_sprite_scale = ZOOM_LEVELS[ed.selected_zoom_level]
-    '''zoom to cursor (FAILED ATTEMPT #7 : CLOSER THAN EVER)
-    'If data.ship And data.ship.center
-    ' Local ship_c_x%, ship_c_y%
-    ' sprite.xform_ship_c_to_scr( data.ship.center, ship_c_x, ship_c_y )
-    ' '''sprite.zpan_x :+ MouseX - ship_c_x
-    ' '''sprite.zpan_y :+ MouseY - ship_c_y
-    ' ed.target_zpan_x :- MouseX - ship_c_x
-    ' ed.target_zpan_y :- MouseY - ship_c_y
-    'EndIf
-    z_delta = 0
-  End If
+	If z_delta <> 0
+		Local img_x#, img_y#, zoom_level_tem#
+    		sprite.get_img_xy( MouseX , MouseY , img_x , img_y )
+		zoom_level_tem = ed.selected_zoom_level
+    		'modify zoom
+    		If z_delta > 0 'ZOOMING IN
+    			ed.selected_zoom_level :+ 1
+      		If ed.selected_zoom_level >= ZOOM_LEVELS.length
+	      		  ed.selected_zoom_level = ZOOM_LEVELS.length - 1
+      		End If
+   		Else 'z_delta < 0  'ZOOMING OUT
+     		ed.selected_zoom_level :- 1
+      		If ed.selected_zoom_level < 0
+        			ed.selected_zoom_level = 0
+      		End If
+    		End If
+    		ed.target_sprite_scale = ZOOM_LEVELS[ed.selected_zoom_level]
+		'zoom to windows center
+		If data.ship
+			Local Zoom_delta_ratio# = ZOOM_LEVELS[ed.selected_zoom_level] / ZOOM_LEVELS[zoom_level_tem] - 1
+			ed.target_zpan_x :+ ( sprite.pan_x + ed.target_zpan_x ) * Zoom_delta_ratio
+			ed.target_zpan_y :+ ( sprite.pan_y + ed.target_zpan_y ) * Zoom_delta_ratio
+  		''zoom to cursor
+		Rem 
+			Finally success after FAILED ATTEMPT #8 : 
+			Don't even bother to use that coordinate translate thing. 
+			We are Not going To do anything about ship center. 
+			Focus on sprite center!  -D
+		EndRem
+			If APP. zoom_to_cursor And Zoom_delta_ratio > 0
+				ed.target_zpan_x :- ( MouseX - W_MID ) * Zoom_delta_ratio * APP.zoom_to_cursor
+				ed.target_zpan_y :- ( MouseY - H_MID ) * Zoom_delta_ratio * APP.zoom_to_cursor
+			EndIf		
+		EndIf
+    		z_delta = 0
+	End If
   If Abs(ed.target_sprite_scale - sprite.scale) < ZOOM_SNAP
-    sprite.scale = ed.target_sprite_scale
-    'sprite.zpan_x = ed.target_zpan_x
-    'sprite.zpan_y = ed.target_zpan_y
+	sprite.scale = ed.target_sprite_scale
+    	sprite.zpan_x = ed.target_zpan_x
+    	sprite.zpan_y = ed.target_zpan_y
   Else
     sprite.scale :+ ZOOM_UPDATE_FACTOR * (ed.target_sprite_scale - sprite.scale)
-    'sprite.zpan_x :+ ZOOM_UPDATE_FACTOR*(ed.target_zpan_x - sprite.zpan_x)
-    'sprite.zpan_y :+ ZOOM_UPDATE_FACTOR*(ed.target_zpan_y - sprite.zpan_y)
+    sprite.zpan_x :+ ZOOM_UPDATE_FACTOR*(ed.target_zpan_x - sprite.zpan_x)
+    sprite.zpan_y :+ ZOOM_UPDATE_FACTOR*(ed.target_zpan_y - sprite.zpan_y)
   EndIf
-  ''trap sprite in viewable area
-  'If sprite.sx + sprite.sw < 0
-  ' sprite.zpan_x :- (sprite.sx + sprite.sw)
-  'EndIf
+' don't think we need this anymore, I just done a "reset view point like" thing.
+'  'trap sprite in viewable area
+'  If sprite.sx + sprite.sw < 0
+'   sprite.zpan_x :- (sprite.sx + sprite.sw)
+'  EndIf
 End Function
 
 '-----------------------
@@ -1304,7 +1324,8 @@ Function load_ui( ed:TEditor )
   ed.ico_mirr = LoadImage( "incbin::assets/ico_mirr.png", 0 )
   ed.ico_exit = LoadImage( "incbin::assets/ico_exit.png", 0 )
   ed.engineflame = LoadImage( "incbin::assets/engineflame32.png", FILTEREDIMAGE | MIPMAPPEDIMAGE )
-  ed.engineflamecore = LoadImage( "incbin::assets/engineflamecore32.png", FILTEREDIMAGE | MIPMAPPEDIMAGE )  
+  ed.engineflamecore = LoadImage( "incbin::assets/engineflamecore32.png" , FILTEREDIMAGE | MIPMAPPEDIMAGE )
+  ed.circle=LoadImage( "incbin::assets/64x_circle.png" , FILTEREDIMAGE | MIPMAPPEDIMAGE )
   AutoMidHandle( True )
 End Function
 

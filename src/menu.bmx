@@ -36,7 +36,8 @@ Global MENU_FUNCTION_REMOVE% = s; s:+1
 Global MENU_FUNCTION_EXIT% = s; s:+1
 Global MENU_FUNCTION_ZOOM% = s; s:+1
 Global MENU_FUNCTION_ZOOMIN% = s; s:+1
-Global MENU_FUNCTION_ZOOMOUT% = s; s:+1
+Global MENU_FUNCTION_ZOOMOUT% = s ; s:+ 1
+Global MENU_FUNCTION_RESET% = s ; s:+ 1
 Global functionMenu:TGadget[s]
 s = 0
 Global MENU_ANIMATE% = s; s:+1
@@ -144,7 +145,8 @@ Function init_gui_menus()
   functionMenu[MENU_FUNCTION_EXIT] = CreateMenu("{{m_function_exit}}", 405, functionMenu[MENU_FUNCTION], KEY_ESCAPE )
   functionMenu[MENU_FUNCTION_ZOOM] = CreateMenu("{{m_function_zoom}}", 406, functionMenu[MENU_FUNCTION] )
   functionMenu[MENU_FUNCTION_ZOOMIN] = CreateMenu("{{m_function_zoomin}}", 407, functionMenu[MENU_FUNCTION_ZOOM], KEY_EQUALS, MODIFIER_CONTROL )
-  functionMenu[MENU_FUNCTION_ZOOMOUT] = CreateMenu("{{m_function_zoomout}}", 408, functionMenu[MENU_FUNCTION_ZOOM], KEY_MINUS, MODIFIER_CONTROL )
+  functionMenu[MENU_FUNCTION_ZOOMOUT] = CreateMenu("{{m_function_zoomout}}" , 408 , functionMenu[MENU_FUNCTION_ZOOM] , KEY_MINUS , MODIFIER_CONTROL )
+  functionMenu[MENU_FUNCTION_RESET] = CreateMenu("{{m_function_reset}}" , 409 , functionMenu[MENU_FUNCTION] )
   CreateMenu"", 0, functionMenu[MENU_FUNCTION]
   'animateMene, dock on the end of functionMenu for now.
   animateMenu[MENU_ANIMATE] = CreateMenu("{{m_function_Animate}}", 460, functionMenu[MENU_FUNCTION] )

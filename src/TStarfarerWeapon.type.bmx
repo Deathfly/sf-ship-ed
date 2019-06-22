@@ -45,6 +45,7 @@ Type TStarfarerWeapon
 	
 	Field renderHints:TArray = New TArray
 	Field renderBelowAllWeapons% = 0
+	Field renderAboveAllWeapons% = 0
 	Field showDamageWhenDecorative% = 0
 	Field displayArcRadius# = 0 ' default is 250 but meh
 	
@@ -62,6 +63,10 @@ Type TStarfarerWeapon
 	
 	Field muzzleFlashSpec:TStarfarerWeaponMuzzleFlashSpec
 	Field smokeSpec:TStarfarerWeaponSmokeSpec
+	
+	Field noImpactSounds% = 0
+	Field noShieldImpactSounds% = 0
+	Field noNonShieldImpactSounds% = 0
 	
 	'optional, beam only
 	Field beamEffect$ = ""

@@ -28,6 +28,7 @@ Type Application
 	Field UTF8_support%
 	Field custom_FONT$
 	Field localization_file$
+	Field zoom_to_cursor#
 
 	Function Load:Application()
 		Local settings_json$
@@ -50,7 +51,7 @@ Type Application
 			LOC = LoadLanguage( "incbin::release/ENG.ini" )
 		EndIf
 		SetLocalizationLanguage(LOC)
-		SetLocalizationMode(LOCALIZATION_ON | LOCALIZATION_OVERRIDE)	
+		SetLocalizationMode(LOCALIZATION_ON | LOCALIZATION_OVERRIDE)
 		'MARK load core files
 		app_obj.get_starfarer_dir()
 		If app_obj.images_dir.length = 0        Then app_obj.images_dir = app_obj.starsector_base_dir

@@ -24,5 +24,6 @@
   "window_size": [
     1024,
     768
-  ]
+  ],
+  "zoom_to_cursor": 1.5
 }

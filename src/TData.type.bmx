@@ -725,60 +725,93 @@ Type TData
 	Method get_fighterbays_count%()		
 		If csv_row = Null Then Return 0
 		Local count:Object = csv_row.ValueForKey("fighter bays")
-		If count Then Return int(count.ToString() )
+		If count Then Return Int(count.ToString() )
 	End Method	
 	'////////////
 	
 	'requires subsequent call to update_variant()
-	Method assign_weapon_to_slot( ship_weapon_slot_id$, weapon_id$, group_i%=0 )
+	Method assign_weapon_to_slot( ship_weapon_slot_id$, weapon_id$, group_i%=0, is_module%=False )
 		Local found% = False
-		If variant.weaponGroups
-			'if a slot assignment already exists, update it
-			For Local group:TStarfarerVariantWeaponGroup = EachIn variant.weaponGroups
-				For Local existing_ship_weapon_slot_id$ = EachIn group.weapons.Keys()
-					If ship_weapon_slot_id = existing_ship_weapon_slot_id
-						group.weapons.Insert( ship_weapon_slot_id, weapon_id )
-						found = True
-						Exit
-					EndIf
-				Next
-				If found Then Exit
-			Next
-		EndIf
-		'otherwise, insert it to group_i
-		If Not found
-			If group_i >= variant.weaponGroups.length
-				Local group:TStarfarerVariantWeaponGroup = New TStarfarerVariantWeaponGroup
-				group.weapons.Insert( ship_weapon_slot_id, weapon_id )
-				If variant.weaponGroups.length = 0
-					variant.weaponGroups = New TStarfarerVariantWeaponGroup[1]
-					variant.weaponGroups[0] = group
-				Else 'variant.weaponGroups.length > 0
-					Local L% = variant.weaponGroups.length
-					variant.weaponGroups = variant.weaponGroups[..(group_i + 1)]
-					For Local g% = L Until variant.weaponGroups.length
-						variant.weaponGroups[g] = New TStarfarerVariantWeaponGroup
-					Next
-					variant.weaponGroups[group_i] = group
+		'0.9.1a modules handling
+		If is_module
+		'if a slot assignment already exists, update it
+			For Local ship_module:Tmap = EachIn variant.modules
+				'hmm, seems like module array always contain only so called "paired map" in it.
+				If ship_module.Contains(ship_weapon_slot_id)
+					ship_module.Clear()
+					ship_module.Insert(ship_weapon_slot_id,weapon_id)
+					found = True
+					Exit
 				EndIf
-			Else 'group_i < variant.weaponGroups.length
-				Local group:TStarfarerVariantWeaponGroup = variant.weaponGroups[group_i]
-				group.weapons.Insert( ship_weapon_slot_id, weapon_id )
+			Next
+		'otherwise, insert it
+			If Not found
+				Local ship_module:Tmap = CreateMap()
+				ship_module.Insert(ship_weapon_slot_id,weapon_id)
+				variant.modules = variant.modules + [ship_module]
+			EndIf
+		'Old weapon handling
+		Else
+			If variant.weaponGroups
+				'if a slot assignment already exists, update it
+				For Local group:TStarfarerVariantWeaponGroup = EachIn variant.weaponGroups
+					For Local existing_ship_weapon_slot_id$ = EachIn group.weapons.Keys()
+						If ship_weapon_slot_id = existing_ship_weapon_slot_id
+							group.weapons.Insert( ship_weapon_slot_id, weapon_id )
+							found = True
+							Exit
+						EndIf
+					Next
+					If found Then Exit
+				Next
+			EndIf
+			'otherwise, insert it to group_i
+			If Not found
+				If group_i >= variant.weaponGroups.length
+					Local group:TStarfarerVariantWeaponGroup = New TStarfarerVariantWeaponGroup
+					group.weapons.Insert( ship_weapon_slot_id, weapon_id )
+					If variant.weaponGroups.length = 0
+						variant.weaponGroups = New TStarfarerVariantWeaponGroup[1]
+						variant.weaponGroups[0] = group
+					Else 'variant.weaponGroups.length > 0
+						Local L% = variant.weaponGroups.length
+						variant.weaponGroups = variant.weaponGroups[..(group_i + 1)]
+						For Local g% = L Until variant.weaponGroups.length
+							variant.weaponGroups[g] = New TStarfarerVariantWeaponGroup
+						Next
+						variant.weaponGroups[group_i] = group
+					EndIf
+				Else 'group_i < variant.weaponGroups.length
+					Local group:TStarfarerVariantWeaponGroup = variant.weaponGroups[group_i]
+					group.weapons.Insert( ship_weapon_slot_id, weapon_id )
+				EndIf
 			EndIf
 		EndIf
 	EndMethod
 	
 	'requires subsequent call to update_variant()
-	Method unassign_weapon_from_slot( ship_weapon_slot_id$ )
+	Method unassign_weapon_from_slot( ship_weapon_slot_id$ , is_module% = False )
+		If Not is_module
 		'remove a slot assignment
-		For Local group:TStarfarerVariantWeaponGroup = EachIn variant.weaponGroups
-			For Local existing_ship_weapon_slot_id$ = EachIn group.weapons.Keys()
-				If ship_weapon_slot_id = existing_ship_weapon_slot_id
-					group.weapons.Remove( ship_weapon_slot_id )
-					'TODO: if the group is empty, remove it (??) -- empty groups aren't visible in-game anyhow
-				EndIf
+			For Local group:TStarfarerVariantWeaponGroup = EachIn variant.weaponGroups
+				For Local existing_ship_weapon_slot_id$ = EachIn group.weapons.Keys()
+					If ship_weapon_slot_id = existing_ship_weapon_slot_id
+						group.weapons.Remove( ship_weapon_slot_id )
+						'TODO: if the group is empty, remove it (??) -- empty groups aren't visible in-game anyhow
+					EndIf
+				Next
 			Next
-		Next
+		'0.9.1a module handling	
+		Else
+			'find the module
+			For Local i% = 0 Until variant.modules.length
+				If variant.modules[i].Contains(ship_weapon_slot_id)
+			'remove the found module
+					variant.modules = variant.modules[..i] + variant.modules[i+1..]
+					Exit 
+				EndIf 
+			Next
+		EndIf
 	EndMethod
 
 	'requires subsequent call to update()
@@ -1117,15 +1150,28 @@ Type TData
 		Return -1
 	EndMethod
 
-	Method find_assigned_slot_weapon$( ship_weapon_slot_id$ )
-		For Local group:TStarfarerVariantWeaponGroup = EachIn variant.weaponGroups
-			For Local assigned_slot_id$ = EachIn group.weapons.Keys()
-				If assigned_slot_id = ship_weapon_slot_id
-					Return String( group.weapons.ValueForKey( ship_weapon_slot_id ))
-				EndIf
+	Method find_assigned_slot_weapon$( ship_weapon_slot_id$ , is_module% = False )
+		If Not is_module
+			For Local group:TStarfarerVariantWeaponGroup = EachIn variant.weaponGroups
+				Local value:Object = MapValueForKey( group.weapons , ship_weapon_slot_id )
+				If value <> Null Then Return String( value )
 			Next
-		Next
-		Return Null
+			Return ""
+		'0.9.1a module support
+		Else
+			For Local ship_Module:Tmap = EachIn variant.modules
+				Local value:Object = MapValueForKey( ship_Module , ship_weapon_slot_id )				
+				If value <> Null
+				'TODO: Something wrong within the rejson. Value in TMap Array return a wrong type here. I use a work around method here. But we'd better check it out later.
+					If String( value ) <> ""
+						Return String( value )
+					Else
+						Return TString( value ).value
+					Endif
+				EndIf 
+			Next
+			Return ""
+		EndIf
 	EndMethod
 
 	Method weapon_slot_id_exists%( id_str$ )
@@ -1705,7 +1751,7 @@ Type TData
 		Return columns
 	EndMethod
 
-	Method take_snapshot( input% = 0 )
+	Method take_snapshot( Input% = 0 )
 		If snapshot_undoing Then Return
 		If Not snapshot_inited Then Return
 		If Not snapshot_curr
@@ -1720,7 +1766,7 @@ Type TData
 		snapshot_curr.mode = ed.mode
 		snapshot_curr.last_mode = ed.last_mode
 		
-		Select input
+		Select Input
 			
 			Case MENU_MODE_SHIP
 				snapshot_curr.json_str = json_str

@@ -10,6 +10,7 @@ Type TStarfarerVariant
 	Field quality#
 	Field permaMods$[]
 	Field wings$[]
+	Field modules:TMap[] '<String,String>  weapon slot id --> weapon id
 	
 	Method New()
 		displayName = "New Variant"
@@ -23,6 +24,7 @@ Type TStarfarerVariant
 		quality = 0
 		permaMods = New String[0]
 		wings = New String[0]
+		modules = New Tmap[0]
 	EndMethod
 
 	Method getAllWeapons:TMap () ' <String,String>  weapon slot id --> weapon id
@@ -43,7 +45,7 @@ Type TStarfarerVariant
 		c.fluxVents = fluxVents
 		c.fluxCapacitors = fluxCapacitors
 		c.hullMods = hullMods
-		c.weaponGroups = new TStarfarerVariantWeaponGroup[weaponGroups.length] ' deep clone
+		c.weaponGroups = New TStarfarerVariantWeaponGroup[weaponGroups.length] ' deep clone
 		For Local i% = 0 Until weaponGroups.length
 			c.weaponGroups[i] = weaponGroups[i].clone()
 		Next
