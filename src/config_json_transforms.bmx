@@ -7,16 +7,24 @@ Function config_json_transforms()
   json.precision = 6
   'Application
   json.add_transform( "stringify_settings", "$hide_vanilla_data", json.XJ_CONVERT, "boolean" )
+  json.add_transform( "stringify_settings", "$json_object_output_in_alphabet_order", json.XJ_CONVERT, "boolean" )
+  json.add_transform( "stringify_settings", "$fluxmod_limit_override", json.XJ_CONVERT, "boolean" )
+  json.add_transform( "stringify_settings", "$UTF8_support", json.XJ_CONVERT, "boolean" )
+  json.add_transform( "stringify_settings", "$performance_mode", json.XJ_CONVERT, "boolean" )
+
   'TStarfarerShip
   json.add_transform( "stringify_ship", "$builtInWeapons:object", json.XJ_DELETE,, predicate_omit_if_empty_object )
-  json.add_transform( "stringify_ship", "$builtInMods:array", json.XJ_DELETE,, predicate_omit_if_empty_array )
+  json.add_transform( "stringify_ship" , "$builtInMods:array" , json.XJ_DELETE , , predicate_omit_if_empty_array )
+  json.add_transform( "stringify_ship" , "$builtInWings:array" , json.XJ_DELETE , , predicate_omit_if_empty_array )
+  json.add_transform( "stringify_ship", "$moduleAnchor:array", json.XJ_DELETE,, predicate_omit_if_empty_array )
   json.add_transform( "stringify_ship", "$moduleAnchor:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
-  json.add_transform( "stringify_ship", "$coversColor:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
+  json.add_transform( "stringify_ship", "$coversColor:string" , json.XJ_DELETE , , predicate_omit_if_empty_string )
+
   'TStarfarerShipWeapon
   json.add_transform( "parse_ship", "$weaponSlots:array/:object/$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_ship", "$weaponSlots:array/:object/$type_:string", json.XJ_RENAME, "type" )
   json.add_transform( "stringify_ship" , "$weaponSlots:array/:object/$position:array" , json.XJ_DELETE , , predicate_omit_position )
-  json.add_transform( "stringify_ship", "$weaponSlots:array/:object/#renderOrderMod:number", json.XJ_DELETE,, predicate_omit_if_equals_zero )
+  json.add_transform( "stringify_ship", "$weaponSlots:array/:object/$renderOrderMod:number", json.XJ_DELETE,, predicate_omit_if_equals_zero )
 
   'TStarfarerCustomEngineStyleSpec
   json.add_transform( "parse_ship", "$engineSlots:array/:object/$styleSpec:object/$type:string", json.XJ_RENAME, "type_" )
@@ -141,6 +149,9 @@ Function config_json_transforms()
   json.add_transform( "stringify_weapon", "$renderBelowAllWeapons", json.XJ_DELETE,, predicate_omit_if_boolean_equals_FALSE )
   json.add_transform( "stringify_weapon", "$beamFireOnlyOnFullCharge", json.XJ_DELETE,, predicate_omit_if_boolean_equals_FALSE )
   json.add_transform( "stringify_weapon", "$showDamageWhenDecorative", json.XJ_DELETE,, predicate_omit_if_boolean_equals_FALSE )
+  json.add_transform( "stringify_weapon", "$noImpactSounds", json.XJ_DELETE,, predicate_omit_if_boolean_equals_FALSE )
+  json.add_transform( "stringify_weapon", "$noShieldImpactSounds", json.XJ_DELETE,, predicate_omit_if_boolean_equals_FALSE )
+  json.add_transform( "stringify_weapon", "$noNonShieldImpactSounds", json.XJ_DELETE,, predicate_omit_if_boolean_equals_FALSE )
   json.add_transform( "stringify_weapon", "$requiresFullCharge", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE )
   json.add_transform( "stringify_weapon", "$animateWhileFiring", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE )
   json.add_transform( "stringify_weapon", "$alwaysAnimate", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE )

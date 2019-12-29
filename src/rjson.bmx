@@ -85,13 +85,28 @@ Type json
 
 	'Encode settings
 	Global formatted% = True 'false: compact,   true: indented; global setting
-	Global formatted_array% = True 'false: compact,   true: indented; global setting
+	Global formatted_array% = True 'false: compact,   true: indented; global setting 
 	Global empty_container_as_null% = False 'false: [] {} "",   true: null
 	Global indent_size% = 2 'spaces per indent level, if formatted is true; global setting
 	Global precision% = 6 'cstdio.h default floating-point precision; can be overridden per field/object/instance/item/value
 	
 	'Transformations
 	Global transformations:TMap = CreateMap()
+	
+	'Json output object order
+	Global object_order:TMap = CreateMap()
+	
+	Rem
+	Customized array output control by array object name. Only work when formatted = true.
+	Key contain object name.
+	Value is a array contain 2 int. 
+		[0] is an overrider that remove the line break before the first element and after the last element.
+		[1] is line braker constant. Means the frequency to insert line feed mark.
+	EndRem
+	Global formatted_array_use_customized_format% = False
+	Global formatted_array_remove_line_break_at_both_end% = False
+	Global formatted_array_line_break_frequency% = 1
+	Global customized_array_output:Tmap = CreateMap() ' String: Int array[2]
 	
 	'Generate a JSON-Encoded String from an arbitrary Object
 	Function stringify:String( source_object:Object, transforms_set$ = Null )
@@ -262,8 +277,9 @@ Type json
 									EndSelect
 									TObject(converted_object).fields.Insert( source_object_field.Name(), field_value )
 								Next
-							EndIf
+							EndIf							
 						EndIf
+						converted_object.type_id = source_object_type_id.name()' log object ID down -D
 					EndIf
 				Else ' source_object_type_id.ElementType() <> Null
 					'Is Array
@@ -286,10 +302,11 @@ Type json
 								EndSelect
 								TArray(converted_object).elements.AddLast( element_value )
 							Next
-						EndIf
+						EndIf						
 					EndIf
+					converted_object.type_id = source_object_type_id.name()' log object ID down -D
 				EndIf
-			EndIf
+			EndIf			
 		EndIf
 		Return converted_object
 	EndFunction
@@ -653,6 +670,8 @@ EndFunction
 Type TValue
 	
 	Field value_type%
+	
+	Field type_id$
 
 	Method Encode:String( indent%, precision% ) Abstract
 
@@ -1166,12 +1185,22 @@ Type TArray Extends TValue
 				encoded :+ ARRAY_BEGIN + ARRAY_END
 			EndIf
 		Else
+			'Check if we have customized output options for this array
+			Local skip_both_ends_line_break% = False
+			Local LBF% = 1 'line break frequency
+			If json.formatted_array_use_customized_format
+				skip_both_ends_line_break = json.formatted_array_remove_line_break_at_both_end
+				LBF = json.formatted_array_line_break_frequency
+			EndIf
 			encoded :+ ARRAY_BEGIN
-			If json.formatted And json.formatted_array Then encoded :+ "~n"
-			If json.formatted And json.formatted_array Then indent :+ 1
-			If json.formatted And json.formatted_array Then encoded :+ json.RepeatSpace( indent*json.indent_size )
 			Local size% = elements.Count()
 			Local index% = 0
+			If json.formatted And json.formatted_array
+				indent :+ 1
+				If Not (size <= json.formatted_array_line_break_frequency And skip_both_ends_line_break )
+				encoded :+ "~n" + json.RepeatSpace( indent*json.indent_size )
+				EndIf
+			EndIf
 			For Local element:TValue = EachIn elements
 				If element <> Null
 					encoded :+ element.Encode( indent, precision )
@@ -1179,14 +1208,19 @@ Type TArray Extends TValue
 					encoded :+ VALUE_NULL
 				EndIf
 				index :+ 1
-				If index < size
+				If index < size 
 					encoded :+ VALUE_SEPARATOR
-					If json.formatted And json.formatted_array Then encoded :+ "~n"
-					If json.formatted And json.formatted_array Then encoded :+ json.RepeatSpace( indent*json.indent_size )
+					If json.formatted And json.formatted_array And index Mod LBF = 0 
+						encoded :+ "~n" + json.RepeatSpace( indent * json.indent_size )
+					Else encoded :+ " "
+					EndIf
 				Else 'index >= size
-					If json.formatted And json.formatted_array Then encoded :+ "~n"
-					If json.formatted And json.formatted_array Then indent :- 1
-					If json.formatted And json.formatted_array Then encoded :+ json.RepeatSpace( indent * json.indent_size )
+					If json.formatted And json.formatted_array
+						indent :- 1
+						If Not (size <= json.formatted_array_line_break_frequency And skip_both_ends_line_break )
+							encoded :+ "~n" + json.RepeatSpace( indent * json.indent_size )
+						EndIf
+					EndIf
 				EndIf
 			Next
 			encoded :+ ARRAY_END
@@ -1321,20 +1355,60 @@ Type TObject Extends TValue
 			EndIf
 		Else
 			encoded :+ OBJECT_BEGIN
-			Local iter:TNodeEnumerator = fields.Keys().ObjectEnumerator()
-			If iter.HasNext()
+			If Not fields.IsEmpty()
 				If json.formatted Then encoded :+ "~n"
 				If json.formatted Then indent :+ 1
-				If json.formatted Then encoded :+ json.RepeatSpace( indent*json.indent_size )
+				If json.formatted Then encoded :+ json.RepeatSpace( indent * json.indent_size )				
+				' for optional object output oreder control -D
+				Local order:TList = TList(MapValueForKey(json.object_order,type_id))
+				If order 
+					Local iter:TListEnum = order.ObjectEnumerator()
+					While iter.hasnext()
+						Local field_name$ =String( iter.NextObject() )
+						If Not fields.Contains(field_name) Then Continue
+						encoded :+ STRING_BEGIN
+						encoded :+ field_name
+						encoded :+ STRING_END
+						encoded :+ PAIR_SEPARATOR
+						If json.formatted Then encoded :+ " "
+						Local field_value:TValue = TValue( fields.ValueForKey( field_name ))
+						' for customized_array_output. I knew it is odd to make it done here, but this is the only way wwe got the  field name  -D
+						If TArray(field_value)
+							Local array_customize%[] = Int[](MapValueForKey(json.customized_array_output, field_name))
+							If array_customize
+								json.formatted_array_use_customized_format% = True
+								json.formatted_array_remove_line_break_at_both_end% = array_customize[0]
+								json.formatted_array_line_break_frequency% = array_customize[1]
+							EndIf
+						EndIf
+						encoded :+ field_value.Encode( indent, precision )
+						json.formatted_array_use_customized_format = False 'always shutdown customized_array_output after output, in case of something wrong is going on. -D
+						fields.Remove(field_name) ' less efficiency for a higher compatibility. should be aware this will mask error like typo in the order list.
+						If Not fields.isEmpty() Then encoded :+ VALUE_SEPARATOR Else If json.formatted Then indent :- 1 'check we hit the end or not.				
+						If json.formatted Then encoded :+ "~n" + json.RepeatSpace( indent*json.indent_size )
+					End While
+				EndIf
+				' OOO part end -D
+				Local iter:TNodeEnumerator = fields.Keys().ObjectEnumerator()							
 				While iter.HasNext()
-					Local field_name:String = String( iter.NextObject() )
+					Local field_name$ = String( iter.NextObject() )
 					encoded :+ STRING_BEGIN
 					encoded :+ field_name
 					encoded :+ STRING_END
 					encoded :+ PAIR_SEPARATOR
 					If json.formatted Then encoded :+ " "
 					Local field_value:TValue = TValue( fields.ValueForKey( field_name ))
+					' for customized_array_output. I knew it is odd to make it done here, but this is the only way wwe got the  field name  -D
+					If TArray(field_value)
+						Local array_customize%[] = Int[](MapValueForKey(json.customized_array_output, field_name))
+						If array_customize
+							json.formatted_array_use_customized_format% = True
+							json.formatted_array_remove_line_break_at_both_end% = array_customize[0]
+							json.formatted_array_line_break_frequency% = array_customize[1]
+						EndIf
+					EndIf
 					encoded :+ field_value.Encode( indent, precision )
+					json.formatted_array_use_customized_format = False 'always shutdown customized_array_output after output, in case of something wrong is going on. -D
 					If iter.HasNext()
 						encoded :+ VALUE_SEPARATOR
 						If json.formatted Then encoded :+ "~n"

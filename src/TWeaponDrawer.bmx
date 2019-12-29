@@ -93,7 +93,7 @@ Type TWeaponDrawer
 				Else
 					Local i%
 					For i = 0 Until data.variant.modules.length
-						Local ship_Module:Tmap = data.variant.modules[i]
+						Local ship_Module:TMap = data.variant.modules[i]
 						Local value:Object = MapValueForKey( ship_Module , weaponslot.id )				
 						If value <> Null
 						'TODO: Something wrong within the rejson. Value in TMap Array return a wrong type here. I use a work around method here. But we'd better check it out later.
@@ -398,14 +398,14 @@ Type TWeaponDrawer
 		If weaponSlot.mount = "HIDDEN" Then Return
 		If Not variant_to_render Then Return
 		If Not weaponSlot Then Return
-		Local rotation# = 90 - weaponSlot.angle - angle_offset
-		While rotation > 360
-			rotation :- 360
+		Local Rotation# = 90 - weaponSlot.angle - angle_offset
+		While Rotation > 360
+			Rotation :- 360
 		Wend
-		While rotation < 0
-			rotation :+ 360
+		While Rotation < 0
+			Rotation :+ 360
 		Wend
-		SetRotation( rotation )
+		SetRotation( Rotation )
 		SetScale( sprite.scale, sprite.scale )
 		'draw		
 		Local img_path$
@@ -432,7 +432,7 @@ Type TWeaponDrawer
 				x:- hull.moduleAnchor[1]
 				y:- hull.moduleAnchor[0]			
 			EndIf 
-			rotate_vector2f(y, x, rotation)
+			rotate_vector2f(y, x, Rotation)
 			'calc. coords
 			x = sprite.sx + (data.ship.center[1] + weaponSlot.locations[0] + x ) * sprite.scale
 			y = sprite.sy + (data.ship.center[0] - weaponSlot.locations[1] - y ) * sprite.scale
@@ -444,24 +444,24 @@ Type TWeaponDrawer
 		If weaponSlot.mount = "HIDDEN" Then Return
 		If Not weapon Then Return
 		If Not weaponSlot Then Return
-		Local rotation# = 90 - weaponSlot.angle - angle_offset
-		While rotation > 360
-			rotation :- 360
+		Local Rotation# = 90 - weaponSlot.angle - angle_offset
+		While Rotation > 360
+			Rotation :- 360
 		Wend
-		While rotation < 0
-			rotation :+ 360
+		While Rotation < 0
+			Rotation :+ 360
 		Wend
 		If MapValueForKey(animes, weaponSlot.id)
 			Local anime:TAnime = TAnime ( MapValueForKey(animes, weaponSlot.id) )
-			draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, rotation, data, sprite, anime.currFrame, x_offset, y_offset, angle_offset)
+			draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, Rotation, data, sprite, anime.currFrame, x_offset, y_offset, angle_offset)
 		Else If ed.program_mode = "weapon"
-			If weaponEditorAnime Then draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, rotation, data, sprite, weaponEditorAnime.currFrame, x_offset, y_offset, angle_offset )..
-			Else draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, rotation, data, sprite, - 1, x_offset, y_offset, angle_offset)
-		Else draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, rotation, data, sprite, - 1, x_offset, y_offset, angle_offset)
+			If weaponEditorAnime Then draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, Rotation, data, sprite, weaponEditorAnime.currFrame, x_offset, y_offset, angle_offset )..
+			Else draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, Rotation, data, sprite, - 1, x_offset, y_offset, angle_offset)
+		Else draw_weaponBySpec(weapon, weaponSlot.mount, weaponSlot.locations, Rotation, data, sprite, - 1, x_offset, y_offset, angle_offset)
 		End If
 	End Method
 	
-	Method draw_weaponBySpec( weapon:TStarfarerWeapon, weapon_mount$, weapon_loc#[], rotation#, data:TData, sprite:TSprite, frame_to_draw% = - 1, x_offset# = 0, y_offset# = 0, angle_offset# = 0)
+	Method draw_weaponBySpec( weapon:TStarfarerWeapon, weapon_mount$, weapon_loc#[], Rotation#, data:TData, sprite:TSprite, frame_to_draw% = - 1, x_offset# = 0, y_offset# = 0, angle_offset# = 0)
 		'init var
 		Local main_img:TImage = Null
 		Local under_img:TImage = Null
@@ -512,28 +512,28 @@ Type TWeaponDrawer
 		If ed.program_mode <> "weapon" And weapon_mount = "HARDPOINT"
 			If main_img
 				Local c# = ImageHeight(main_img) * 0.25
-				x :+ c * Sin(rotation)
-				y :+ c * Cos(rotation)
+				x :+ c * Sin(Rotation)
+				y :+ c * Cos(Rotation)
 			'juse in case if there are not hardpointSprit but have something others
 			Else If under_img
 				Local c# = ImageHeight(under_img) * 0.25
-				x :+ c * Sin(rotation)
-				y :+ c * Cos(rotation)
+				x :+ c * Sin(Rotation)
+				y :+ c * Cos(Rotation)
 			Else If gun_img
 				Local c# = ImageHeight(gun_img) * 0.25
-				x :+ c * Sin(rotation)
-				y :+ c * Cos(rotation)
+				x :+ c * Sin(Rotation)
+				y :+ c * Cos(Rotation)
 			EndIf 
 		EndIf	
 		'OK let's draw
 		x:+ x_offset
 		y:+ y_offset
-		draw_weaponByImg(main_img, under_img, gun_img, [x, y], rotation, weapon.check_render_barrel_below(), data, sprite)
+		draw_weaponByImg(main_img, under_img, gun_img, [x, y], Rotation, weapon.check_render_barrel_below(), data, sprite)
 	EndMethod
 	
 		
-	Method draw_weaponByImg( main_img:TImage, under_img:TImage, gun_img:TImage, weapon_loc#[], rotation#, RENDER_BARREL_BELOW% = False, data:TData, sprite:TSprite )
-		SetRotation( rotation )
+	Method draw_weaponByImg( main_img:TImage, under_img:TImage, gun_img:TImage, weapon_loc#[], Rotation#, RENDER_BARREL_BELOW% = False, data:TData, sprite:TSprite )
+		SetRotation( Rotation )
 		SetScale( sprite.scale, sprite.scale )
 		'calc. coords
 		Local	x# = 0
@@ -645,7 +645,7 @@ Type TWeaponRenderData
 	Method init (ws:TStarfarerShipWeapon, w:TStarfarerWeapon)
 		weaponSlot = ws
 		weapon = w
-		Local offset_weight# = Abs weaponSlot.locations[0] / 100000 + Abs weaponSlot.locations[1] / 10000
+		Local offset_weight# = Abs (weaponSlot.locations[0] / 100000) + Abs (weaponSlot.locations[1] / 10000)
 			renderOrder :- offset_weight
 		If Not weapon.renderBelowAllWeapons
 			renderOrder = weapon.draw_order() * 2
@@ -657,7 +657,7 @@ Type TWeaponRenderData
 	Method inti_for_module(ws:TStarfarerShipWeapon, v:TStarfarerVariant)
 		weaponSlot = ws
 		VARIANT = v
-		Local offset_weight# = Abs weaponSlot.locations[0] / 100000 + Abs weaponSlot.locations[1] / 10000
+		Local offset_weight# = Abs (weaponSlot.locations[0] / 100000) + Abs (weaponSlot.locations[1] / 10000)
 		renderOrder :- offset_weight
 		'hope this is right
 		renderOrder :- 100

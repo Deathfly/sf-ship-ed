@@ -1,6 +1,6 @@
 Rem
 
-STARSECTOR Ship&Weapon Editor 3.0.0 pre-alpha 4
+STARSECTOR Ship&Weapon Editor 3.0.0 pre-alpha 7
 Created by Trylobot
 Updated by Deathfly
 
@@ -25,6 +25,8 @@ Import "src/console.bmx"
 ?Win32
 Import "assets/sf_icon.o"
 ?
+Global VERSION$ = "3.0.0 pre-alpha 7"
+
 Incbin "release/sf-ship-ed-settings.json" 'for defaults
 Incbin "assets/bg.png"
 Incbin "assets/kb_key.png"
@@ -42,7 +44,6 @@ Incbin "assets/ico_mirr.png"
 Incbin "assets/ico_exit.png"
 Incbin "assets/engineflame32.png"
 Incbin "assets/engineflamecore32.png"
-Incbin "assets/64x_circle.png"
 Incbin "release/ENG.ini"
 
 Const FLOAT_MAX# = 10e38:Float
@@ -100,13 +101,14 @@ Include "src/multiselect_values.bmx"
 Include "src/TTextCoder.bmx"
 Include "src/TWeaponDrawer.bmx"
 Include "src/TWingrenderer.bmx"
-
+Include "src/config_json_output_object_order.bmx"
+Include "src/config_json_customized_array_output.bmx"
 '/////////////////////////////////////////////
 'MARK: init APP var
 Global DEBUG_LOG_FILE:TStream = WriteStream( "sf-ship-ed.log" )
 Global LOC:TMaxGuiLanguage
 SetGraphicsDriver GLMax2DDriver()
-AppTitle = "STARSECTOR Ship&Weapon Editor"
+AppTitle = "STARSECTOR Ship&Weapon Editor" + " " + VERSION
 Global APP:Application = Application.Load()
 Global Apprunning% = True
 Global W_MAX# = APP.window_size[0], W_MID# = W_MAX / 2.0
@@ -135,7 +137,7 @@ Const ENGINE_MANEUVERING_JETS_CONTRAIL_SIZE% = 128 'hack: makes a custom engine 
 
 '////////////////////////////////////////////////
 'MARK: init main windows
-Global MainWindow:TGadget = CreateWindow("{{wt_main}}", 200, 0, W_MAX, H_MAX, Null, WINDOW_TITLEBAR | WINDOW_MENU | WINDOW_RESIZABLE | WINDOW_ACCEPTFILES )
+Global MainWindow:TGadget = CreateWindow("{{wt_main}}" + " " + VERSION, 200, 0, W_MAX, H_MAX, Null, WINDOW_TITLEBAR | WINDOW_MENU | WINDOW_RESIZABLE | WINDOW_ACCEPTFILES )
 Global CSVEditor:TGadget = Null
 H_MAX = MainWindow.ClientHeight()
 H_MID = H_MAX / 2
@@ -177,7 +179,10 @@ Flip( 1 )
 '////////////////////////////////////////////////
 'MARK: json
 config_json_transforms()
-
+If Not APP.json_object_output_in_alphabet_order
+	config_json_output_object_order()
+EndIf
+config_customized_array_output()
 '////////////////////////////////////////////////
 'MARK: Local var init
 
@@ -269,7 +274,7 @@ MainWindow.SetSensitivity(SENSITIZE_ALL)
 updata_weapondrawermenu(ed)
 '//////////////////////////////////////////////////////////////////////////////
 '//////////////////////////////////////////////////////////////////////////////
-' MARK: MAIN LOOP
+'MARK: MAIN LOOP
 '//////////////////////////////////////////////////////////////////////////////
 '//////////////////////////////////////////////////////////////////////////////
 
@@ -321,7 +326,7 @@ Repeat
     Case EVENT_GADGETACTION , EVENT_MENUACTION
       'DebugLog (EventSource().ToString() )
       If EventSource() = optionMenu[MENU_OPTION_ABOUT]
-        Notify("STARSECTOR Ship&Weapon Editor~nCreated by Trylobot~nUpdated by Deathfly~n~n" + LocalizeString("{{msg_localisation_credits}}") )
+        Notify("STARSECTOR Ship&Weapon Editor~n"+VERSION+"~nCreated by Trylobot~nUpdated by Deathfly~n~n" + LocalizeString("{{msg_localisation_credits}}") )
       EndIf
       check_zoom_and_pan( ed, data, sprite )
       If check_undo( ed, data, sprite ) Then Continue
@@ -496,6 +501,7 @@ Until AppTerminate()
 '//////////////////////////////////////////////////////////////////////////////
 
 Function end_program( data:TData )
+  APP.Save()
   If data.changed
     If Confirm( LocalizeString("{{msg_unsaved_exit}}") ) Then End
   Else
@@ -1526,7 +1532,7 @@ Function undo(ed:TEditor, data:TData, sprite:TSprite, redo% = False)
   data.snapshot_undoing = True
   If snap.json_str
     data.json_str = snap.json_str
-    data.decode( data.json_str )
+    data.Decode( data.json_str )
     data.json_view = data.columnize_text( data.json_str )
   EndIf
   If snap.json_str_variant

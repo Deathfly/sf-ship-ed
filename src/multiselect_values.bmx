@@ -79,8 +79,9 @@ Function load_known_multiselect_values( ed:TEditor )
 	ed.load_multiselect_value( "weapon.barrelMode", "ALTERNATING" )
 	ed.load_multiselect_value( "weapon.barrelMode", "ALTERNATING_BURST" )
 	ed.load_multiselect_value( "weapon.barrelMode", "LINKED" )
+	ed.load_multiselect_value( "weapon.barrelMode", "DUAL" )
 	'ed.load_multiselect_value( "weapon.barrelMode", "" )
-
+	
 	ed.load_multiselect_value( "weapon.size", "LARGE" )
 	ed.load_multiselect_value( "weapon.size", "MEDIUM" )
 	ed.load_multiselect_value( "weapon.size", "SMALL" )

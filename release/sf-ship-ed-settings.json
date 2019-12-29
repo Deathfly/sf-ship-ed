@@ -25,5 +25,6 @@
     1024,
     768
   ],
-  "zoom_to_cursor": 1.5
+  "zoom_to_cursor": 1.5,
+  "json_object_output_in_alphabet_order": 0
 }

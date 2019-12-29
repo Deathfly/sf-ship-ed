@@ -132,11 +132,12 @@ Function calc_dist_from_point_to_segment#( px#, py#, s1x#, s1y#, s2x#, s2y# )
 EndFunction
 
 Function ang_wrap#( a# ) 'forces the angle into the range [-180,180]
+	Local mult%
 	If a < -180
-		Local mult% = Abs( (a-180) / 360 )
+		mult = Abs( (a-180) / 360 )
 		a :+ mult * 360
 	Else If a > 180
-		Local mult% = Abs( (a+180) / 360 )
+		mult = Abs( (a+180) / 360 )
 		a :- mult * 360
 	End If
 	Return a

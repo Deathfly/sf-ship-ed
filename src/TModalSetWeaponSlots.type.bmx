@@ -133,15 +133,17 @@ Type TModalSetWeaponSlots Extends TSubroutine
 		SetRotation( 0 )
 		SetScale( 1, 1 )
 		SetAlpha( 1 )
-		For Local i% = 0 Until data.ship.weaponSlots.Length
-			If data.ship.weaponSlots[i].is_launch_bay()
-				Continue 'skip these
-			EndIf
-			weapon = data.ship.weaponSlots[i]
-			wx = sprite.sx + (weapon.locations[0] + data.ship.center[1]) * sprite.scale
-			wy = sprite.sy + ( - weapon.locations[1] + data.ship.center[0]) * sprite.scale
-			draw_weapon_mount( wx, wy, weapon.angle, weapon.arc, i = ni, weapon.type_, weapon.size )
-		Next
+		If data.ship.weaponSlots
+			For Local i% = 0 Until data.ship.weaponSlots.Length
+				If data.ship.weaponSlots[i].is_launch_bay()
+					Continue 'skip these
+				EndIf
+				weapon = data.ship.weaponSlots[i]
+				wx = sprite.sx + (weapon.locations[0] + data.ship.center[1]) * sprite.scale
+				wy = sprite.sy + ( - weapon.locations[1] + data.ship.center[0]) * sprite.scale
+				draw_weapon_mount( wx, wy, weapon.angle, weapon.arc, i = ni, weapon.type_, weapon.size )
+			Next
+		EndIf
 		SetRotation( 0 )
 		SetScale( 1, 1 )
 		SetAlpha( 1 )
@@ -155,13 +157,17 @@ Type TModalSetWeaponSlots Extends TSubroutine
 				angle = weapon.angle
 				arc = weapon.arc
 			EndIf
-			draw_weapon_mount( x, y, angle, arc, False, weapon.type_, weapon.size )
-			If ed.bounds_symmetrical 'reflected twin
+			If weapon 
+				draw_weapon_mount( x, y, angle, arc, False, weapon.type_, weapon.size )
+			EndIf
+			 	If ed.bounds_symmetrical 'reflected twin
 				wyr = img_y - data.ship.center[0] 'simulating TData math
 				angle = -angle
 				xr = x
 				yr = sprite.sy + (-wyr + data.ship.center[0])*sprite.scale
-				draw_weapon_mount( xr, yr, angle, arc, False, weapon.type_, weapon.size )
+				If weapon				
+					draw_weapon_mount( xr, yr, angle, arc, False, weapon.type_, weapon.size )
+				EndIf
 			EndIf
 			SetAlpha( 1 )
 		EndIf

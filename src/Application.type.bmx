@@ -29,7 +29,8 @@ Type Application
 	Field custom_FONT$
 	Field localization_file$
 	Field zoom_to_cursor#
-
+	Field json_object_output_in_alphabet_order%
+	
 	Function Load:Application()
 		Local settings_json$
 		Try
@@ -65,7 +66,7 @@ Type Application
 	EndFunction
 	
 	Method Save()
-		Local settings_json$ = JSON.stringify( Self )
+		Local settings_json$ = JSON.stringify( Self, "stringify_settings" )
 		SaveString( settings_json, "sf-ship-ed-settings.json" )
 	End Method
 	

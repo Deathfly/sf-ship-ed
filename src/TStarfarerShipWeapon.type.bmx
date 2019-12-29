@@ -4,7 +4,7 @@ Type TStarfarerShipWeapon
 	Field arc#
 	Field id$
 	Field locations#[]
-	Field position#[]
+	Field position#[] ' dig out from Starsector loading spec but never seems to be used.
 	Field mount$	
 	Field size$
 	Field type_$
@@ -47,7 +47,6 @@ Type TStarfarerShipWeapon
 		mount = "TURRET"
 		size = "MEDIUM"
 		type_ = "ENERGY"
-		renderOrderMod = 0
 	End Method
 
 	Method Clone:TStarfarerShipWeapon()

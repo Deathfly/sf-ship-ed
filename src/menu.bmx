@@ -7,7 +7,7 @@
 
 Global mainMenuNeedUpdate% = False
 
-Local s% = 0
+Global s% = 0
 Global MENU_FILE% = s; s:+ 1
 Global MENU_FILE_NEW% = s; s:+ 1
 Global MENU_FILE_LOAD_MOD% = s; s:+1
@@ -106,7 +106,7 @@ Global MENU_SUBFUNCTION_WEAPON_WPIMG_GLOW% = s; s:+1
 Global MENU_SUBFUNCTION_WEAPON_WEAPON_GLOWTOGGLE% = s; s:+1
 Global MENUSIZE_MENU_SUBFUNCTION_WEAPON_____% = s
 s = 0
-
+Release s
 Global functionMenuSub:TGadget[][] = New TGadget[][modeMenu.length]
 
 

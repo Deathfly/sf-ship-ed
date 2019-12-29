@@ -298,6 +298,7 @@ Type TModalSetStringData Extends TSubroutine
 				TStarfarerShipWeapon(target).arc = values.lines[i].ToDouble(); i:+ 1
 				TStarfarerShipWeapon(target).locations[0] = values.lines[i].ToDouble(); i:+ 1
 				TStarfarerShipWeapon(target).locations[1] = values.lines[i].ToDouble(); i:+1
+				TStarfarerShipWeapon(target).renderOrderMod = values.lines[i].ToDouble(); i:+1
 				'If values.lines.length >= i + 1 And TStarfarerShipWeapon(target).type_ = "BUILT_IN"
 				'	data.ship.builtInWeapons.Insert( TStarfarerShipWeapon(target).id, values.lines[i] ); i:+1
 				'EndIf
@@ -486,7 +487,8 @@ Type TModalSetStringData Extends TSubroutine
 				"ship.weapon.angle" +"~n"+..
 				"ship.weapon.arc"+"~n"+..
 				"ship.weapon.x"	+"~n"+..
-				"ship.weapon.y"	)
+				"ship.weapon.y"	+"~n"+..
+				"ship.weapon.renderOrderMod"	)
 			values = TextWidget.Create( ..
 				TStarfarerShipWeapon(target).id +"~n"+..
 				TStarfarerShipWeapon(target).mount +"~n"+..
@@ -495,7 +497,8 @@ Type TModalSetStringData Extends TSubroutine
 				json.FormatDouble( TStarfarerShipWeapon(target).angle, 3 ) + "~n" + ..
 				json.FormatDouble( TStarfarerShipWeapon(target).arc, 3 ) + "~n" + ..
 				json.FormatDouble(TStarfarerShipWeapon(target).locations[0], 2 ) + "~n" + ..
-				json.FormatDouble(TStarfarerShipWeapon(target).locations[1], 2 ) )
+				json.FormatDouble(TStarfarerShipWeapon(target).locations[1], 2 ) + "~n" + ..
+				json.FormatDouble(TStarfarerShipWeapon(target).renderOrderMod, 2) )
 		'//////////////////////////////////////
 		Case MODE_VARIANT 
 			labels = TextWidget.Create( ..
@@ -721,18 +724,18 @@ Type TModalSetStringData Extends TSubroutine
 	EndMethod
 EndType
 
-Function floatArrayToString:String (input:Float[], precision:Int = 6)
+Function floatArrayToString:String (Input:Float[], precision:Int = 6)
 	Local output$
-	For Local i% = 0 Until input.length
+	For Local i% = 0 Until Input.length
 		If i > 0 Then output :+ ","
-		Local d! = input[i]
+		Local d! = Input[i]
 		output :+ json.FormatDouble( d , precision)
 	Next
 	Return output
 End Function
 
-Function stringToFloatArray:Float[] (input$)
-	Local tmp$[] = input.Split(",")
+Function stringToFloatArray:Float[] (Input$)
+	Local tmp$[] = Input.Split(",")
 	Local output#[]
 	For Local i% = 0 Until tmp.length
 		output = output[..] + [tmp[i].ToFloat( )]
@@ -740,17 +743,17 @@ Function stringToFloatArray:Float[] (input$)
 	Return output
 End Function
 
-Function intArrayToString:String (input:Int[])
+Function intArrayToString:String (Input:Int[])
 	Local output$
-	For Local i% = 0 Until input.length
+	For Local i% = 0 Until Input.length
 		If i > 0 Then output :+ ","
-		output :+ input[i]
+		output :+ Input[i]
 	Next
 	Return output
 End Function
 
-Function stringToIntArray:Int[] (input$)
-	Local tmp$[] = input.Split(",")
+Function stringToIntArray:Int[] (Input$)
+	Local tmp$[] = Input.Split(",")
 	Local output%[]
 	For Local i% = 0 Until tmp.length
 		output = output[..] + [tmp[i].ToInt( )]
@@ -758,11 +761,11 @@ Function stringToIntArray:Int[] (input$)
 	Return output
 End Function
 
-Function booleanToString:String (input%)
-	If input = False Then Return "False" Else Return "True"
+Function booleanToString:String (Input%)
+	If Input = False Then Return "False" Else Return "True"
 End Function
 
-Function stringToBoolean:Int (input$)
-	If input.ToLower() = "false" Then Return False Else Return True
+Function stringToBoolean:Int (Input$)
+	If Input.ToLower() = "false" Then Return False Else Return True
 	
 End Function

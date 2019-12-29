@@ -39,7 +39,7 @@ Type CONSOLE
 		cursor_i = i
 		CONSOLE_last_str = str
 		Return str
-	End Function
+	End Function 
 	
 	
 	
