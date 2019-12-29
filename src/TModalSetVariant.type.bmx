@@ -269,7 +269,7 @@ Type TModalSetVariant Extends TSubroutine
 					EndIf
 				EndIf
 			weapon_list_widget = TextWidget.Create( weapon_list_display )
-		Else
+		Else ' weapon_slot.is_station_module()
 			weapon_list_display = weapon_list[..]
 			For wi = 0 Until weapon_list_display.length
 				weapon_id = weapon_list_display[wi]

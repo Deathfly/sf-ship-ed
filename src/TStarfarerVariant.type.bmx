@@ -14,14 +14,14 @@ Type TStarfarerVariant
 	
 	Method New()
 		displayName = "New Variant"
-		hullId = "new_hull"
-		variantId = "new_hull_variant"
+		hullId = ""
+		variantId = ""
 		fluxVents = 0
 		fluxCapacitors = 0
 		hullMods = New String[0]
 		weaponGroups = New TStarfarerVariantWeaponGroup[0]
-		goalVariant = 1
-		quality = 0
+		goalVariant = 0
+		quality = 1
 		permaMods = New String[0]
 		wings = New String[0]
 		modules = New Tmap[0]

@@ -653,7 +653,8 @@ Function check_file_menu%(ed:TEditor, data:TData, sprite:TSprite)
           data.snapshots_redo:TList = CreateList()
 
       EndSelect
-    
+	  FlushEvent()
+
     Case fileMenu[MENU_FILE_LOAD_MOD] 'load mod
       load_mod( ed, data )
     
@@ -1568,12 +1569,16 @@ Function compare_hullmod_ids%( h0:Object, h1:Object )
 EndFunction
 
 
-'Clean out the eventQueue, then return how many events we nuked
+'Clean out the eventQueue, then return how many events we nuked. Will also reset all mod key stat
 Function FlushEvent%()
   Local i% = 0
   While PollEvent()
     PollEvent()
     i:+ 1
   Wend
+  ModKeyAndMouseKey = False
+  SHIFT= False
+  CONTROL = False
+  ALT= False
   Return i
 End Function
