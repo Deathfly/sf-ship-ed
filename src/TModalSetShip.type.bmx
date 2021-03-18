@@ -47,6 +47,7 @@ Function load_ship_image( ed:TEditor, data:TData, sprite:TSprite, image_path$ = 
         Local to_remove$ = ExtractDir( scan )+"/"'C:/Games/Starfarer/mods/sc2/
           image_path = image_path.Replace( to_remove, "" )'graphics/sc2/ships/sc2_earthling_cruiser.png
           If image_path.StartsWith( "graphics" ) 'just in case!
+			image_path.Trim 'been reported something the path will came with extre line breaker. So just Trim it for sure
             data.ship.spriteName = image_path
             data.update()
           EndIf

@@ -26,6 +26,8 @@ Type CONSOLE
 				If i > 0 Then i :- 1
 			Case KEY_RIGHT
 				If i < str.length Then i :+ 1
+			Case KEY_TAB 'prevent \t input
+			Case KEY_RETURN 'prevent \r input
 			Default
 				If PeekEvent() And PeekEvent().id = EVENT_KEYCHAR 'we got some valid input.
 					If max_size = INFINITY Or str.length < max_size
