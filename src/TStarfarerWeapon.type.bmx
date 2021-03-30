@@ -52,6 +52,8 @@ Type TStarfarerWeapon
 	Field specialWeaponGlowHeight# = 0 ' default is 0 but meh
 	Field specialWeaponGlowWidth# = 0 ' default is 0 but meh
 	
+	Field mountTypeOverride$ = "" '0.95 new
+	
 	'optional, projectile only
 	Field animationType$ = "NONE"
 	Field visualRecoil# = 0.0
@@ -68,6 +70,8 @@ Type TStarfarerWeapon
 	Field noShieldImpactSounds% = 0
 	Field noNonShieldImpactSounds% = 0
 	
+	Field unaffectedByProjectileSpeedBonuses% =0 '0.95 new
+	
 	'optional, beam only
 	Field beamEffect$ = ""
 	
@@ -79,6 +83,9 @@ Type TStarfarerWeapon
 	Field pixelsPerTexel# = 1.0
 	Field hitGlowRadius# = 0.0
 	Field darkCore% = 0
+	Field darkFringeIter% = 0 '0.95 new
+	Field darkCoreIter% =0 '0.95 new
+	Field coreWidthMult# = 0 '0.95 new
 	
 	Field collisionClass$ = "RAY"
 	Field collisionClassByFighter$ = "RAY_FIGHTER"

@@ -25,7 +25,7 @@ Import "src/console.bmx"
 ?Win32
 Import "assets/sf_icon.o"
 ?
-Global VERSION$ = "3.0.0 pre-alpha 7"
+Global VERSION$ = "3.0.0 pre-alpha 8"
 
 Incbin "release/sf-ship-ed-settings.json" 'for defaults
 Incbin "assets/bg.png"

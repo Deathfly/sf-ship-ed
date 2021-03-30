@@ -1,24 +1,24 @@
 Type TStarfarerShip
-	Field bounds#[]
-	Field center#[]
-	Field collisionRadius#
-	Field engineSlots:TStarfarerShipEngine[]
-	Field height#
-	Field width#
-	Field hullId$
-	Field hullName$
-	Field hullSize$
-	Field shieldCenter#[]
-	Field shieldRadius#
-	Field spriteName$
-	Field style$
-	Field viewOffset#
-	Field weaponSlots:TStarfarerShipWeapon[]
-	Field builtInWeapons:TMap'<String,String>  weapon slot id --> weapon id
-	Field builtInMods$[]
-	Field coversColor$
-	Field builtInWings$[]
-	Field moduleAnchor#[]
+	Field bounds#[] 'checked
+	Field center#[] 'checked
+	Field collisionRadius#'checked
+	Field engineSlots:TStarfarerShipEngine[] 'checked
+	Field height# 'checked
+	Field width# 'checked
+	Field hullId$'checked
+	Field hullName$'checked
+	Field hullSize$'checked
+	Field shieldCenter#[]'checked
+	Field shieldRadius#'checked
+	Field spriteName$ 'checked
+	Field style$'checked
+	Field viewOffset# 'checked
+	Field weaponSlots:TStarfarerShipWeapon[] 'checked
+	Field builtInWeapons:TMap'<String,String>  weapon slot id --> weapon id 'checked
+	Field builtInMods$[] 'checked
+	Field coversColor$'checked
+	Field builtInWings$[]  'checked
+	Field moduleAnchor#[]'checked
 	
 	Method New()
 		bounds = New Float[0]

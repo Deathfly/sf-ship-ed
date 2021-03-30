@@ -31,9 +31,11 @@ Function config_json_transforms()
   json.add_transform( "stringify_ship", "$engineSlots:array/:object/$styleSpec:object/$type_:string", json.XJ_RENAME, "type" )
   json.add_transform( "stringify_ship", "$engineSlots:array/:object/$styleSpec:object", json.XJ_DELETE,, predicate_omit_styleSpec )
   json.add_transform( "stringify_ship", "$engineSlots:array/:object/$styleId:string", json.XJ_DELETE,, predicate_omit_styleId )
+
   'TStarfarerVariant
   json.add_transform( "stringify_variant" , "$goalVariant" , json.XJ_CONVERT , "boolean" )
   json.add_transform( "stringify_variant" , "$modules:object", json.XJ_DELETE,, predicate_omit_if_empty_object )
+
   'TStarfarerSkin
   json.add_transform( "parse_skin", "$weaponSlotChanges:object/:object/$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_skin", "$weaponSlotChanges:object/:object/$type_:string", json.XJ_RENAME, "type" )
@@ -73,6 +75,7 @@ Function config_json_transforms()
   'TStarfarerCustomEngineStyleSpec
   json.add_transform( "parse_custom_engine_style", "$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_custom_engine_style", "$type_:string", json.XJ_RENAME, "type" )
+
   'TStarfarerWeapon
   json.add_transform( "parse_weapon", "$type:string", json.XJ_RENAME, "type_" )
   json.add_transform( "stringify_weapon", "$type_:string", json.XJ_RENAME, "type" )
@@ -91,6 +94,7 @@ Function config_json_transforms()
   json.add_transform( "stringify_weapon" , "$noShieldImpactSounds" , json.XJ_CONVERT , "boolean" )
   json.add_transform( "stringify_weapon" , "$noNonShieldImpactSounds" , json.XJ_CONVERT , "boolean" )
   json.add_transform( "stringify_weapon" , "$noImpactSounds" , json.XJ_CONVERT , "boolean" )
+  json.add_transform( "stringify_weapon" , "$unaffectedByProjectileSpeedBonuses" , json.XJ_CONVERT , "boolean" ) '0.95 New
   'TStarfarerWeapon specClass <> beam
   json.add_transform( "stringify_weapon", "$fringeColor", json.XJ_DELETE,, predicate_omit_if_not_specClass_beam )
   json.add_transform( "stringify_weapon", "$coreColor", json.XJ_DELETE,, predicate_omit_if_not_specClass_beam )
@@ -116,7 +120,7 @@ Function config_json_transforms()
   json.add_transform( "stringify_weapon", "$requiresFullCharge", json.XJ_DELETE,, predicate_omit_if_not_specClass_projectile )
   json.add_transform( "stringify_weapon", "$muzzleFlashSpec:object", json.XJ_DELETE,, predicate_omit_if_not_specClass_projectile )
   json.add_transform( "stringify_weapon", "$smokeSpec:object", json.XJ_DELETE,, predicate_omit_if_not_specClass_projectile )
-  'TStarfarerWeapon can be removed if it is default
+  'TStarfarerWeapon -can be removed if it is default
   ' string with default = ""
   json.add_transform( "stringify_weapon", "$turretUnderSprite:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
   json.add_transform( "stringify_weapon", "$turretGunSprite:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
@@ -128,11 +132,15 @@ Function config_json_transforms()
   json.add_transform( "stringify_weapon", "$beamEffect:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
   json.add_transform( "stringify_weapon", "$fireSoundOne:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
   json.add_transform( "stringify_weapon", "$fireSoundTwo:string", json.XJ_DELETE,, predicate_omit_if_empty_string )
+  json.add_transform( "stringify_weapon", "$mountTypeOverride:string", json.XJ_DELETE,, predicate_omit_if_empty_string ) '0.95 new
   ' number
   json.add_transform( "stringify_weapon", "$numFrames:number", json.XJ_DELETE,, predicate_omit_if_single_frame )
   json.add_transform( "stringify_weapon", "$frameRate:number", json.XJ_DELETE,, predicate_omit_if_single_frame )
   json.add_transform( "stringify_weapon", "$visualRecoil:number", json.XJ_DELETE,, predicate_omit_if_equals_zero)
   json.add_transform( "stringify_weapon", "$displayArcRadius:number", json.XJ_DELETE,, predicate_omit_if_equals_zero)
+  json.add_transform( "stringify_weapon", "$darkFringeIter:number", json.XJ_DELETE,, predicate_omit_if_equals_zero)'0.95 new
+  json.add_transform( "stringify_weapon", "$darkCoreIter:number", json.XJ_DELETE,, predicate_omit_if_equals_zero)'0.95 new
+  json.add_transform( "stringify_weapon", "$coreWidthMult:number", json.XJ_DELETE,, predicate_omit_if_equals_zero)'0.95 new
   ' array
   json.add_transform( "stringify_weapon", "$pierceSet:array", json.XJ_DELETE,, predicate_omit_if_empty_array )
   json.add_transform( "stringify_weapon", "$renderHints:array", json.XJ_DELETE,, predicate_omit_if_empty_array )
@@ -155,6 +163,7 @@ Function config_json_transforms()
   json.add_transform( "stringify_weapon", "$requiresFullCharge", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE )
   json.add_transform( "stringify_weapon", "$animateWhileFiring", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE )
   json.add_transform( "stringify_weapon", "$alwaysAnimate", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE )
+  json.add_transform( "stringify_weapon", "$unaffectedByProjectileSpeedBonuses", json.XJ_DELETE,, predicate_omit_if_boolean_equals_TRUE ) '0.95 new
   ' unknow things
   json.add_transform( "stringify_weapon", "$specialWeaponGlowWidth:number", json.XJ_DELETE,, predicate_omit_if_equals_zero )
   json.add_transform( "stringify_weapon", "$specialWeaponGlowHeight:number", json.XJ_DELETE,, predicate_omit_if_equals_zero )

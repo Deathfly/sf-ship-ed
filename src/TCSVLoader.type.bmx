@@ -134,7 +134,11 @@ Type TCSVLoader
 			If char = "#" And l = 0 And Not in_quotes
 				in_comment = True
 				'DebugStop
-			ElseIf char = "~q" And Not in_comment
+				Rem
+					Alex just add record separator "~r" in a commented line, so we now need quote check in comment,
+					And we needs To ignore single quotation mark now.
+				EndRem
+			ElseIf char = Chr(34) 'And Not in_comment 
 				'field escape char
 				in_quotes = Not in_quotes
 			ElseIf char = "," And Not in_quotes And Not in_comment
@@ -148,6 +152,7 @@ Type TCSVLoader
 			'DebugStop
 				'unquoted record separator char
 				records[r][f] = Mid(data, c - fl + 1, fl)
+				'DebugLog(f + " " + c + " " + fl + " " + records[r][f])
 				If char = "~r" And (c + 1) < data.length And Chr(data[c + 1]) = "~n"
 					'ignore "~r~n" (windows)
 					c :+ 1

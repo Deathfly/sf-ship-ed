@@ -1,13 +1,17 @@
 Type TStarfarerSkin
-	Field baseHullId$
+	Field baseHullId$ 
 	Field skinHullId$
 	Field hullName$
 	Field restoreToBaseHull%
 	Field hullDesignation$
+	Field manufacturer$
+	Field tech$
 	Field spriteName$
 	Field descriptionId$
 	Field descriptionPrefix$
 	Field fleetPoints%
+	Field fpMod%
+	Field fighterBays%
 	Field ordnancePoints%
 	Field systemId$
 	Field baseValue%
