@@ -33,12 +33,12 @@ Type TModalSetWeapon Extends TSubroutine
 	Method Activate( ed:TEditor, data:TData, sprite:TSprite )
 		ed.program_mode = "weapon"
 		ed.mode = "offsets"
-		ed.drag_mirrored = false
+		ed.drag_mirrored = False
 		weapon_display_mode = "TURRET"
 		'data.update_weapon()
 		'offset_lock_idx = - 1
 		ed.drag_nearest_i = - 1
-		do_draw_glow = true
+		do_draw_glow = True
 		'do_draw_barrels = False
 		load_weapon_images( data, sprite )
 		ws = New TStarfarerShipWeapon
@@ -137,9 +137,9 @@ Type TModalSetWeapon Extends TSubroutine
 				EndIf
 				Select weapon_display_mode
 				Case "TURRET"
-					If turretGlow_img Then DrawImage(turretGlow_img, W_MID + sprite.pan_x + x * sprite.scale, H_MID + sprite.pan_y + y * sprite.scale)
+					If turretGlow_img Then DrawImage(turretGlow_img, sprite.asx + ws.locations[0] * sprite.scale + x * sprite.scale, sprite.asy + y * sprite.scale)
 				Case "HARDPOINT"
-					If hardpointGlow_img Then DrawImage(hardpointGlow_img, W_MID + sprite.pan_x + x * sprite.scale, H_MID + sprite.pan_y + y * sprite.scale)
+					If hardpointGlow_img Then DrawImage(hardpointGlow_img, sprite.asx + ws.locations[0] * sprite.scale + x * sprite.scale, sprite.asy + y * sprite.scale)
 				End Select
 			Next			
 			SetBlend(ALPHABLEND)
