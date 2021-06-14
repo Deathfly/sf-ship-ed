@@ -11,15 +11,22 @@ Type TWingRenderer
 	
 	
 	Method draw_all_wings(ed:TEditor, data:TData , built_in_only% = False)
-			For Local i% = 0 Until data.get_fighterbays_count()
-			If i < data.ship.builtInWings.length
-				draw_fighter_icons(data.ship.builtInWings[i], i, ed , True)				
-			Else If Not built_in_only And i < data.ship.builtInWings.length + data.variant.wings.length
-				draw_fighter_icons(data.variant.wings[i - data.ship.builtInWings.length], i, ed)
+			If Not data.get_fighterbays_count()
+				Local str$ = LocalizeString("{{ui_function_wing_nofighterbaystr}}") 
+				Local widget:TextWidget = TextWidget.Create( str )
+				draw_container( 7, LINE_HEIGHT * 7.5, widget.w + 20, widget.h + 20, 0.0, 0.0 )
+				draw_string( widget, 7 +10, LINE_HEIGHT * 7.5 + 10, $FFFFFF, 0.0, 0.0 )
 			Else
-				draw_fighter_icons(Null, i, ed)
-			EndIf
-		Next	
+				For Local i% = 0 Until data.get_fighterbays_count()
+					If i < data.ship.builtInWings.length
+						draw_fighter_icons(data.ship.builtInWings[i], i, ed , True)				
+					Else If Not built_in_only And i < data.ship.builtInWings.length + data.variant.wings.length
+						draw_fighter_icons(data.variant.wings[i - data.ship.builtInWings.length], i, ed)
+					Else
+						draw_fighter_icons(Null, i, ed)
+					EndIf
+				Next
+			EndIf			
 	End Method
 	
 	Method draw_fighter_icons(wingID$, index%, ed:TEditor, builtin% = False)

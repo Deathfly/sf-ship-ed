@@ -607,7 +607,7 @@ Type TModalSetVariant Extends TSubroutine
 			If Not nearest
 				SetAlpha( 0.5 )
 			EndIf
-			draw_variant_weapon_mount( wx, wy, weapon_slot )
+			draw_variant_weapon_mount( wx, wy, weapon_slot, sprite.scale )
 		Next
 		SetAlpha( 1 )
 
@@ -620,7 +620,7 @@ Type TModalSetVariant Extends TSubroutine
 			If ed.weapon_lock_i = -1 'the select-a-weapon list will be drawn instead if it's non-null
 				draw_assigned_weapon_info( ed,data,sprite, weapon_slot )
 			EndIf
-			draw_variant_weapon_mount( wx, wy, weapon_slot )
+			draw_variant_weapon_mount( wx, wy, weapon_slot,sprite.scale )
 		EndIf
 	EndMethod
 

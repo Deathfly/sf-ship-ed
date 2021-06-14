@@ -1,6 +1,6 @@
 Rem
 
-STARSECTOR Ship&Weapon Editor 3.0.0 pre-alpha 7
+STARSECTOR Ship&Weapon Editor 3.0.0 pre-alpha 10
 Created by Trylobot
 Updated by Deathfly
 
@@ -25,7 +25,7 @@ Import "src/console.bmx"
 ?Win32
 Import "assets/sf_icon.o"
 ?
-Global VERSION$ = "3.0.0 pre-alpha 8"
+Global VERSION$ = "3.0.0 pre-alpha 10"
 
 Incbin "release/sf-ship-ed-settings.json" 'for defaults
 Incbin "assets/bg.png"
@@ -132,7 +132,7 @@ Const ZOOM_UPDATE_FACTOR# = 0.25 'per frame
 
 '////////////////////////////////////////////////
 
-Const MAX_VARIANT_WEAPON_GROUPS% = 5
+Const MAX_VARIANT_WEAPON_GROUPS% = 7
 Const ENGINE_MANEUVERING_JETS_CONTRAIL_SIZE% = 128 'hack: makes a custom engine style into a "maneuvering jet"
 
 '////////////////////////////////////////////////
@@ -184,7 +184,7 @@ If Not APP.json_object_output_in_alphabet_order
 EndIf
 config_customized_array_output()
 '////////////////////////////////////////////////
-'MARK: Local var init
+'MARK: Global TEditor TData TSprite init
 
 Global ed:TEditor = New TEditor
 ed.show_help = True
@@ -407,6 +407,7 @@ Repeat
 
         'draw
         draw_bg( ed )
+		draw_module_under( ed, data, sprite, WD )
         draw_sprite( ed, sprite )
         draw_weapons( ed, data, sprite, WD )
         
@@ -1016,7 +1017,7 @@ Function update_zoom( ed:TEditor, data:TData, sprite:TSprite )
     		End If
     		ed.target_sprite_scale = ZOOM_LEVELS[ed.selected_zoom_level]
 		'zoom to windows center
-		If data.ship
+		If data.ship Or data.weapon
 			Local Zoom_delta_ratio# = ZOOM_LEVELS[ed.selected_zoom_level] / ZOOM_LEVELS[zoom_level_tem] - 1
 			ed.target_zpan_x :+ ( sprite.pan_x + ed.target_zpan_x ) * Zoom_delta_ratio
 			ed.target_zpan_y :+ ( sprite.pan_y + ed.target_zpan_y ) * Zoom_delta_ratio
@@ -1027,10 +1028,10 @@ Function update_zoom( ed:TEditor, data:TData, sprite:TSprite )
 			We are Not going To do anything about ship center. 
 			Focus on sprite center!  -D
 		EndRem
-			If APP. zoom_to_cursor And Zoom_delta_ratio > 0
+			If APP.zoom_to_cursor And Zoom_delta_ratio > 0
 				ed.target_zpan_x :- ( MouseX - W_MID ) * Zoom_delta_ratio * APP.zoom_to_cursor
 				ed.target_zpan_y :- ( MouseY - H_MID ) * Zoom_delta_ratio * APP.zoom_to_cursor
-			EndIf		
+			EndIf
 		EndIf
     		z_delta = 0
 	End If
@@ -1080,8 +1081,7 @@ Function draw_sprite( ed:TEditor, sprite:TSprite )
     SetScale( sprite.scale, sprite.scale )
     SetAlpha( 1 )
     SetColor( 255, 255, 255 )
-    If ed.program_mode = "variant" ..
-    Or ed.program_mode = "csv" ..
+    If ed.program_mode = "csv" ..
     Or ed.program_mode = "csv_wing" ..
     Or ed.program_mode = "csv_weapon" ..
     Or ed.mode = "weapon_slots" ..

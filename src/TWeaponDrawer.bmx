@@ -8,23 +8,28 @@ Type TWeaponDrawer
 	Field _needCheckPlaying% = False
 	Field weaponEditorAnime:TAnime
 	Field renderQueue:TList 'TWeaponRenderData
+	'Field renderQueueModule:TList 'TWeaponRenderData
+	Field module_render_order_mod% = 10000
 	
 	Method New()
 		buffed_img = CreateMap()
 		buffed_img_seq = CreateMap()
 		animes = CreateMap()	
 		renderQueue = CreateList()
+		'renderQueueModule = CreateList()
 	End Method
 	
-	' do not support module on module yet
-	Method queue_module_weapons(renderQueue:TList Var, weapon_slot:TStarfarerShipWeapon, variantID$, data:TData, sprite:TSprite, render_Order_Mod% = 0)
+	' do not support module on module yet. (is that a thing?)
+	Method queue_module_weapons(renderQueue:TList Var, weapon_slot:TStarfarerShipWeapon, variantID$, ed:TEditor, data:TData, sprite:TSprite, render_Order_Mod% = 0, UNDER_PARENT% = False)
 		Local variant_tem:TStarfarerVariant = TStarfarerVariant( ed.stock_variants.ValueForKey( variantID ) )
 		If Not variant_tem Then Return
 		Local hullID_tem$ = variant_tem.hullId
 		Local skin_tem:TStarfarerSkin = TStarfarerSkin(ed.stock_skins.ValueForKey( hullID_tem ) )
 		If skin_tem Then hullID_tem = skin_tem.baseHullId
-		Local ship_tem:TStarfarerShip = TStarfarerShip(ed.stock_ships.ValueForKey(hullID_tem) )
+		Local ship_tem:TStarfarerShip = TStarfarerShip(ed.stock_ships.ValueForKey( hullID_tem ) )
 		If Not ship_tem Then Return
+		If Not (UNDER_PARENT = ed.get_ship_hints(hullID_tem).Contains("UNDER_PARENT")) Then Return
+		render_Order_Mod :* 50
 		Local x# = weapon_slot.locations[0]
 		Local y# = weapon_slot.locations[1]
 		Local facing# = weapon_slot.angle
@@ -37,8 +42,9 @@ Type TWeaponDrawer
 		EndIf
 		Local variantRenderData:TWeaponRenderData = New TWeaponRenderData
 		variantRenderData.inti_for_module(weapon_slot, variant_tem)
-		variantRenderData.set_facing_and_offset(0 , 0 , facing) ' only the facing will pass in
+		variantRenderData.set_facing_and_offset(0 , 0 , facing) ' only the facing passed in
 		variantRenderData.renderOrder :+ render_Order_Mod
+		variantRenderData.renderOrder :+ module_render_order_mod
 		renderQueue.AddLast(variantRenderData)
 		Local weapons:TMap = variant_tem.getAllWeapons()
 			For Local i% = 0 Until ship_tem.weaponSlots.length
@@ -52,17 +58,20 @@ Type TWeaponDrawer
 					Local renderData:TWeaponRenderData = New TWeaponRenderData
 					renderData.init(weaponslot , weapon)
 					renderData.set_facing_and_offset(x + x_Anchor, y + y_Anchor, facing)
-					renderData.set_is_station_module_weapon()
+					'renderData.set_is_station_module_weapon()
+					renderData.renderOrder :+ render_Order_Mod
+					renderData.renderOrder :+ module_render_order_mod
 					renderQueue.AddLast(renderData)
 				EndIf
 			Next
 	End Method
 	
-	Method draw_all_weapons(builtin_only%, data:TData, sprite:TSprite, x_offset# = 0, y_offset# = 0)
+	'updated for in game render oreder -D 3.0.0 A10
+	Method draw_all_weapons(builtin_only%, ed:TEditor, data:TData, sprite:TSprite, x_offset# = 0, y_offset# = 0, UNDER_PARENT% = False)
 		If builtin_only
 			For Local i% = 0 Until data.ship.weaponSlots.length
 				Local weaponslot:TStarfarerShipWeapon = data.ship.weaponSlots[i]
-				If weaponslot.is_builtin() Or weaponslot.is_decorative()
+				If weaponslot.is_builtin() Or weaponslot.is_decorative() 
 					Local weaponID$ = String(data.ship.builtInWeapons.ValueForKey(weaponslot.id) )
 					Local weapon:TStarfarerWeapon = TStarfarerWeapon (ed.stock_weapons.ValueForKey(weaponID) )
 					If weapon
@@ -79,7 +88,8 @@ Type TWeaponDrawer
 				'well, I will do the null check later so don't needs in these part...i hope
 				Local weaponID$
 				' modified for 0.9.1a module support
-				If Not weaponslot.is_station_module()
+				'is weapon
+				If Not weaponslot.is_station_module() And Not UNDER_PARENT
 					weaponID = String(weapons.ValueForKey(weaponslot.id) ) 'load from weapon groups frist
 					If Not weaponID Then weaponID = String(data.ship.builtInWeapons.ValueForKey(weaponslot.id) ) 'then, try the built-in list
 					If weaponID
@@ -90,6 +100,7 @@ Type TWeaponDrawer
 							renderQueue.AddLast(renderData)	
 						EndIf						
 					EndIf
+				' is modules
 				Else
 					Local i%
 					For i = 0 Until data.variant.modules.length
@@ -106,10 +117,12 @@ Type TWeaponDrawer
 							EndIf
 						EndIf 
 					Next
-					If weaponID Then queue_module_weapons(renderQueue, weaponslot, weaponID, data, sprite, -i)
+					'UNDER_PARENT thing
+					If weaponID Then queue_module_weapons(renderQueue, weaponslot, weaponID, ed, data, sprite, -i, UNDER_PARENT)
 				EndIf
 			Next			
 		EndIf
+		' start render weapons
 		renderQueue.Sort()
 		For Local d:TWeaponRenderData = EachIn renderQueue
 			If d.weapon
@@ -645,23 +658,51 @@ Type TWeaponRenderData
 	Method init (ws:TStarfarerShipWeapon, w:TStarfarerWeapon)
 		weaponSlot = ws
 		weapon = w
-		Local offset_weight# = Abs (weaponSlot.locations[0] / 100000) + Abs (weaponSlot.locations[1] / 10000)
-			renderOrder :- offset_weight
-		If Not weapon.renderBelowAllWeapons
-			renderOrder = weapon.draw_order() * 2
-			If weapon.type_ = "MISSILE" And (weapon.renderHints.elements.Contains("RENDER_LOADED_MISSILES") Or weapon.renderHints.elements.Contains("RENDER_LOADED_MISSILES_UNLESS_HIDDEN") ) Then renderOrder = renderOrder - 1
-			If Not weaponSlot.mount = "HARDPOINT" Then renderOrder = renderOrder + 20
-		EndIf
+		renderOrderCheck()
 	End Method
-
+	
 	Method inti_for_module(ws:TStarfarerShipWeapon, v:TStarfarerVariant)
 		weaponSlot = ws
-		VARIANT = v
-		Local offset_weight# = Abs (weaponSlot.locations[0] / 100000) + Abs (weaponSlot.locations[1] / 10000)
-		renderOrder :- offset_weight
+		variant = v
+		renderOrderCheck()
 		'hope this is right
-		renderOrder :- 100
 	End Method
+
+	Method renderOrderCheck()
+		Local offset_weight# = 0
+		If	variant
+			Local variant_tem:TStarfarerVariant = TStarfarerVariant( ed.stock_variants.ValueForKey( variant ) )
+			If Not variant_tem Then Return
+			Local hullID_tem$ = variant_tem.hullId
+			Local skin_tem:TStarfarerSkin = TStarfarerSkin(ed.stock_skins.ValueForKey( hullID_tem ) )
+			If skin_tem Then hullID_tem = skin_tem.baseHullId
+			Local ship_tem:TStarfarerShip = TStarfarerShip(ed.stock_ships.ValueForKey( hullID_tem ) )
+			If Not ship_tem Then Return
+			If Not ship_tem.weaponSlots.Length = 0 Then Return			
+		EndIf 
+		If ed And ed.program_mode <> "weapon" And data.ship And ed.get_ship_hints(data.ship.hullId)
+			If ed.get_ship_hints(data.ship.hullId).Contains("WEAPONS_FRONT_TO_BACK")
+				offset_weight = Abs (weaponSlot.locations[1] / 50000) + (weaponSlot.locations[0] / 10000)
+			Else If ed.get_ship_hints(data.ship.hullId).Contains("WEAPONS_BACK_TO_FRONT")
+				offset_weight = Abs (weaponSlot.locations[1] / 50000) - (weaponSlot.locations[0] / 10000)
+			Else
+				offset_weight = Abs (weaponSlot.locations[1] / 10000) + Abs (weaponSlot.locations[0] / 10000000)
+			EndIf
+		EndIf
+		If weapon
+			If weapon.renderBelowAllWeapons
+				renderOrder = 0 - offset_weight + weaponSlot.renderOrderMod
+			Else If weapon.renderAboveAllWeapons
+				renderOrder  = 100000 - offset_weight + weaponSlot.renderOrderMod
+			Else
+				renderOrder = weapon.draw_order() * 2
+				If weapon.type_ = "MISSILE" And (weapon.renderHints.elements.Contains("RENDER_LOADED_MISSILES") Or weapon.renderHints.elements.Contains("RENDER_LOADED_MISSILES_UNLESS_HIDDEN") ) Then renderOrder = renderOrder - 1
+				If Not weaponSlot.mount = "HARDPOINT" Then renderOrder = renderOrder + 20
+				renderOrder :+ offset_weight
+			EndIf
+		EndIf	
+	EndMethod
+
 
 	Method set_facing_and_offset(x#, y#, facing_arc#)
 		x_offset = x
@@ -669,9 +710,9 @@ Type TWeaponRenderData
 		facing = facing_arc	
 	End Method
 
-	Method set_is_station_module_weapon()
-		renderOrder :+ 100
-	End Method
+	'Method set_is_station_module_weapon()
+	'	renderOrder :- 1000
+	'End Method
 	
 	Method Compare:Int(d:Object)
 		Local rd:TWeaponRenderData = TWeaponRenderData(d)
@@ -707,9 +748,24 @@ Function draw_weapons( ed:TEditor, data:TData, sprite:TSprite, wd:TWeaponDrawer 
   If wd.show_weapon = 2 Then SetAlpha( 0.5 )
   Select ed.program_mode
     Case "ship"
-	wd.draw_all_weapons(True, data, sprite)
+	wd.draw_all_weapons(True, ed, data, sprite)
     Case "variant"
-	wd.draw_all_weapons(False, data, sprite)
+	wd.draw_all_weapons(False, ed, data, sprite)
+  EndSelect
+  SetAlpha( 1 )
+End Function
+
+Function draw_module_under( ed:TEditor, data:TData, sprite:TSprite, wd:TWeaponDrawer )
+  wd.update( ed, data )
+  If wd.show_weapon = 0 Then Return
+  SetColor( 255, 255, 255 )
+  If wd.show_weapon = 1 Then SetAlpha( 1 )
+  If wd.show_weapon = 2 Then SetAlpha( 0.5 )
+  Select ed.program_mode
+    'Case "ship"
+	'wd.draw_all_weapons(True, ed, data, sprite)
+    Case "variant"
+	wd.draw_all_weapons(False, ed, data, sprite, 0, 0, True)
   EndSelect
   SetAlpha( 1 )
 End Function

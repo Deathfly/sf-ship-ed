@@ -141,7 +141,7 @@ Type TModalSetWeaponSlots Extends TSubroutine
 				weapon = data.ship.weaponSlots[i]
 				wx = sprite.sx + (weapon.locations[0] + data.ship.center[1]) * sprite.scale
 				wy = sprite.sy + ( - weapon.locations[1] + data.ship.center[0]) * sprite.scale
-				draw_weapon_mount( wx, wy, weapon.angle, weapon.arc, i = ni, weapon.type_, weapon.size )
+				draw_weapon_mount( wx, wy, weapon.angle, weapon.arc, i = ni, weapon.type_, weapon.size, True, sprite.scale )
 			Next
 		EndIf
 		SetRotation( 0 )
@@ -158,7 +158,7 @@ Type TModalSetWeaponSlots Extends TSubroutine
 				arc = weapon.arc
 			EndIf
 			If weapon 
-				draw_weapon_mount( x, y, angle, arc, False, weapon.type_, weapon.size )
+				draw_weapon_mount( x, y, angle, arc, False, weapon.type_, weapon.size, True, sprite.scale )
 			EndIf
 			 	If ed.bounds_symmetrical 'reflected twin
 				wyr = img_y - data.ship.center[0] 'simulating TData math
@@ -166,7 +166,7 @@ Type TModalSetWeaponSlots Extends TSubroutine
 				xr = x
 				yr = sprite.sy + (-wyr + data.ship.center[0])*sprite.scale
 				If weapon				
-					draw_weapon_mount( xr, yr, angle, arc, False, weapon.type_, weapon.size )
+					draw_weapon_mount( xr, yr, angle, arc, False, weapon.type_, weapon.size, True, sprite.scale )
 				EndIf
 			EndIf
 			SetAlpha( 1 )

@@ -55,7 +55,7 @@ Type TStarfarerShip
 	Method CoerceTypes()
 		Fix_Map_TStrings( builtInWeapons )
 	EndMethod
-
+		
 End Type
 
 

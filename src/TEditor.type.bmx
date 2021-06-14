@@ -327,6 +327,16 @@ Type TEditor
 			Return ship_data_csv_field_template.Copy()
 		EndIf
 	EndMethod
+	
+	Method get_ship_hints$( hullId$ )
+		If stock_ship_stats.Contains( hullId )
+			Return String(TMap( stock_ship_stats.ValueForKey( hullId )).ValueForKey("hints"))
+		Else
+			Return Null
+		EndIf
+	EndMethod
+
+
 
 	Method load_stock_wing_stats( dir$, file$, save_field_order%=False )
 		Try

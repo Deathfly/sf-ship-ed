@@ -289,12 +289,17 @@ Function draw_pointer( x%, y%, rot#, em%=False, r%=12, l%=24, fg%=$FFFFFF,bg%=$0
 	SetAlpha( a )
 EndFunction
 
-Function draw_weapon_mount( x%, y%, rot#, arc#, em%=False, slot_Type$ = "", slot_Size$ = "", draw_pointer% = True, r%=12, l%=36, ra%=24)
+Function draw_weapon_mount( x%, y%, rot#, arc#, em%=False, slot_Type$ = "", slot_Size$ = "", draw_pointer% = True, scale#=1,  r#=8, l#=48, ra#=24)
 	Local a# = GetAlpha()
 	Local r_tem% , g_tem% , b_tem%
 	Local bg%=$101010
 	GetColor(r_tem , g_tem , b_tem)
 	SetBlend (ALPHABLEND)
+	scale = Sqr (scale)
+	r = r*scale
+	l = l*scale
+	ra = ra*scale
+	Local space# = 12*scale
 	'check weapon size.
 	Local size% = 1
 	Select slot_Size
@@ -314,53 +319,53 @@ Function draw_weapon_mount( x%, y%, rot#, arc#, em%=False, slot_Type$ = "", slot
 			colors[0] = 255 ; colors[1] = 215 ; colors[2] = 0
 			SetColor( colors[0] , colors[1] , colors[2] )
 			For Local i% = size Until 0 Step -1
-				draw_box (x , y , ra + i * 12 , ra + i * 12)
+				draw_box (x , y , ra + i * space  , ra + i * space )
 			Next 
 		Case "ENERGY"
 			colors[0] = 70 ; colors[1] = 200 ; colors[2] = 255
 			SetColor( colors[0] , colors[1] , colors[2] )
 			For Local i% = size Until 0 Step -1
-				draw_circular (x , y , ra + i * 12 , 90)		
+				draw_circular (x , y , ra + i * space , 90)		
 			Next
 		Case "MISSILE"
 			colors[0] = 155 ; colors[1] = 255 ; colors[2] = 0
 			SetColor( colors[0] , colors[1] , colors[2] )
 			For Local i% = size Until 0 Step -1
-				draw_diamond (x , y , ra + 6 + i * 12 , ra + 6 + i * 12)
+				draw_diamond (x , y , ra + (i-0.5) * space , ra + (i-0.5) * 12)
 			Next
 		Case "UNIVERSAL"
 			colors[0] = 255 ; colors[1] = 255 ; colors[2] = 255
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_box (x , y , ra + size * 12 , ra + size * 12)
-			draw_circular (x , y , ra + size * 12 , 90)
-			draw_diamond (x , y , ra + size * 12 , ra + size * 12)
+			draw_box (x , y , ra + size * space , ra + size * space )
+			draw_circular (x , y , ra + size * space , 90)
+			draw_diamond (x , y , ra + size * space , ra + size * space )
 		Case "HYBRID"
 			colors[0] = 255 ; colors[1] = 165 ; colors[2] = 0
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_box (x , y , ra + size * 12 , ra + size * 12)
-			draw_circular (x , y , ra + size * 12 , 90)
+			draw_box (x , y , ra + size * space , ra + size * space )
+			draw_circular (x , y , ra + size * space , 90)
 		Case "SYNERGY"
 			colors[0] = 0 ; colors[1] = 255 ; colors[2] = 200
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_circular (x , y , ra + size * 12 , 90)
-			draw_diamond (x , y , ra + size * 12 , ra + size * 12)
+			draw_circular (x , y , ra + size * space , 90)
+			draw_diamond (x , y , ra + size * space , ra + size * space )
 		Case "COMPOSITE"
 			colors[0] = 215 ; colors[1] = 255 ; colors[2] = 0
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_box (x , y , ra + size * 12 , ra + size * 12)
-			draw_diamond (x , y , ra + size * 12 , ra + size * 12)
+			draw_box (x , y , ra + size * space , ra + size * space )
+			draw_diamond (x , y , ra + size * space , ra + size * space )
 		Case "STATION_MODULE"
 			colors[0] = 160 ; colors[1] = 32 ; colors[2] = 240
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_circular (x , y , ra + size * 12 , 6)
+			draw_circular (x , y , ra + size * space , 6)
 		Case "DECORATIVE"
 			colors[0] = 255 ; colors[1] = 0; colors[2] = 0
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_circular (x , y , ra + 24 + size * 12 , 3)
+			draw_circular (x , y , ra + 2*space  + size * space , 3)
 		Case "BUILT_IN"
 			colors[0] = 200 ; colors[1] = 200; colors[2] = 200
 			SetColor( colors[0] , colors[1] , colors[2] )
-			draw_circular (x , y , ra + size * 12 , 5)
+			draw_circular (x , y , ra + size * space , 5)
 		Default
 			draw_pointer% = True
 	EndSelect
@@ -368,31 +373,46 @@ Function draw_weapon_mount( x%, y%, rot#, arc#, em%=False, slot_Type$ = "", slot
 	SetAlpha( a * 0.30 )	
 	SetLineWidth( 4 )
 	draw_arc( x , y , (ra + size * 12) , rot + (arc / 2) , rot - (arc / 2) , arc / 2 ) '1 segment per 2 degrees
-	DrawLine(x , y , x + (ra + size * 20) * Cos(rot + (arc / 2) ) , y - (ra + size * 20)  * Sin(rot + (arc / 2) ) )	
-	DrawLine(x , y , x + (ra + size * 20)  * Cos(rot - (arc / 2) ) , y - (ra + size * 20)  * Sin(rot - (arc / 2) ) )
+	DrawLine(x +(r*Cos(rot + (arc / 2))), y - (r*Sin(rot + (arc / 2))), x + (l + size * 20) * Cos(rot + (arc / 2) ) , y - (l + size * 20)  * Sin(rot + (arc / 2) ) )	
+	DrawLine(x +(r*Cos(rot - (arc / 2))), y - (r*Sin(rot - (arc / 2))), x + (l + size * 20)  * Cos(rot - (arc / 2) ) , y - (l + size * 20)  * Sin(rot - (arc / 2) ) )
 	SetLineWidth( 2 )
 	SetColor(255 , 255, 255)
-	draw_arc( x , y , (ra + size * 12) , rot + (arc / 2) , rot - (arc / 2) , arc / 2 ) '1 segment per 2 degrees
-	DrawLine(x , y , x + (ra + size * 20) * Cos(rot + (arc / 2) ) , y - (ra + size * 20)  * Sin(rot + (arc / 2) ) )	
-	DrawLine(x , y , x + (ra + size * 20) * Cos(rot - (arc / 2) ) , y - (ra + size * 20) * Sin(rot - (arc / 2) ) )
+	'draw_arc( x , y , (ra + size * 12) , rot + (arc / 2) , rot - (arc / 2) , arc / 2 ) '1 segment per 2 degrees
+	'DrawLine(x +(r*Cos(rot + (arc / 2))), y - (r*Sin(rot + (arc / 2))), x + (l + size * 20) * Cos(rot + (arc / 2) ) , y - (l + size * 20)  * Sin(rot + (arc / 2) ) )	
+	'DrawLine(x +(r*Cos(rot - (arc / 2))), y - (r*Sin(rot - (arc / 2))), x + (l + size * 20)  * Cos(rot - (arc / 2) ) , y - (l + size * 20)  * Sin(rot - (arc / 2) ) )
 	'draw dot and pointer
 	If draw_pointer
-		SetAlpha( a * 0.80 )
-		SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
-		DrawOval( x - r , y - r , 2 * r , 2 * r )
-		SetLineWidth( 4 )
-		DrawLine( x , y , x + (l + 1) * Cos(rot) , y - (l + 1) * Sin(rot) )
-		SetColor( colors[0] , colors[1] , colors[2] )
-		DrawOval( x - (r - 2) , y - (r - 2) , 2 * (r - 2) , 2 * (r - 2) )
-		SetLineWidth( 2 )
-		DrawLine( x , y , x + l * Cos(rot) , y - l * Sin(rot) )
-		SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
-		DrawOval( x - (r - 4) , y - (r - 4) , 2 * (r - 4) , 2 * (r - 4) )
-		'draw emphasis
+		SetAlpha( a * 0.50 )
 		If em
+			SetLineWidth( 3 )
+			SetColor( 0 , 0 , 0)
+			DrawLine(x,y-(r/2)-2,x,y+(r/2)+2)
+			DrawLine(x-(r/2)-2,y,x+(r/2)+2,y)
+			SetLineWidth( 1 )
+			SetColor( 255 , 255 , 255)
+			DrawLine(x,y-(r/2),x,y+(r/2))
+			DrawLine(x-(r/2),y,x+(r/2),y)
+			SetLineWidth( 4)
+			SetColor( colors[0] , colors[1] , colors[2] )			
+			draw_circular (x , y , 2* r ,90)		
+			'DrawOval( x - (r - 3) , y - (r - 3) , 2 * (r - 3) , 2 * (r - 3) )
+		Else
+			SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
+			DrawOval( x - r , y - r , 2 * r , 2 * r )
 			SetColor( colors[0] , colors[1] , colors[2] )
-			DrawOval( x - (r - 3) , y - (r - 3) , 2 * (r - 3) , 2 * (r - 3) )
-		EndIf
+			DrawOval( x - r  , y - r  , 2 *r  , 2 * r  )
+
+		EndIf		
+		'SetLineWidth( 4 )
+		'SetColor( colors[0] , colors[1] , colors[2] )
+		'DrawLine( x +(r*Cos(rot)), y-(r*Sin(rot)) , x + l * Cos(rot) , y - l * Sin(rot) )
+		'DrawOval( x - (r - 2) , y - (r - 2) , 2 * (r - 2) , 2 * (r - 2) )
+		SetLineWidth( 2 )
+		SetColor( 255 , 255, 255 )
+		DrawLine( x +(r*Cos(rot)), y-(r*Sin(rot)) , x + l * Cos(rot) , y - l * Sin(rot) )
+		'SetColor((bg&$FF0000) Shr 16,(bg&$FF00) Shr 8,(bg&$FF))
+		'DrawOval( x - (r - 4) , y - (r - 4) , 2 * (r - 4) , 2 * (r - 4) )
+		'draw emphasis
 	EndIf
 	'cleanup
 	SetColor(r_tem, g_tem, b_tem)
@@ -530,7 +550,7 @@ Function draw_assigned_weapon_info( ed:TEditor, data:TData, sprite:TSprite, weap
 	draw_string( current_weapon_widget, wx - 40, wy, fg_color,bg_color, 1.0,0.5 )
 EndFunction
 
-Function draw_variant_weapon_mount( wx%, wy%, weaponSlot:TStarfarerShipWeapon )
+Function draw_variant_weapon_mount( wx%, wy%, weaponSlot:TStarfarerShipWeapon, scale# = 1)
 '	'set colors
 '	Local fg_color% = $FFFFFF
 '	Local bg_color% = $000000
