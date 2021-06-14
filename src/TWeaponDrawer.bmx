@@ -699,6 +699,7 @@ Type TWeaponRenderData
 				If weapon.type_ = "MISSILE" And (weapon.renderHints.elements.Contains("RENDER_LOADED_MISSILES") Or weapon.renderHints.elements.Contains("RENDER_LOADED_MISSILES_UNLESS_HIDDEN") ) Then renderOrder = renderOrder - 1
 				If Not weaponSlot.mount = "HARDPOINT" Then renderOrder = renderOrder + 20
 				renderOrder :+ offset_weight
+				renderOrder :+ weaponSlot.renderOrderMod
 			EndIf
 		EndIf	
 	EndMethod
